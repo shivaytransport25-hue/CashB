@@ -1,0 +1,164 @@
+{
+  "entities": {
+    "CashBook": {
+      "title": "CashBook",
+      "description": "Represents an independent business cash book or ledger register owned by a user.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "UID of the authenticated Google user who owns this cash book."
+        },
+        "name": {
+          "type": "string",
+          "description": "Display title of the cash book (1 to 80 chars)."
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional subtitle or notes for the cash book (0 to 200 chars)."
+        },
+        "currencySymbol": {
+          "type": "string",
+          "description": "Currency symbol used for amounts in this book, e.g. ₹ or $ (1 to 10 chars)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the cash book was created (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the cash book was last updated (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": ["userId", "name", "description", "currencySymbol", "createdAt", "updatedAt"]
+    },
+    "Party": {
+      "title": "Party",
+      "description": "Represents a customer, supplier, or staff contact linked to ledger vouchers.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "UID of the authenticated Google user who owns this party record."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the customer, supplier, or staff member (1 to 80 chars)."
+        },
+        "phone": {
+          "type": "string",
+          "description": "Phone number or contact info (0 to 30 chars)."
+        },
+        "role": {
+          "type": "string",
+          "enum": ["Customer", "Supplier", "Staff"],
+          "description": "Party classification role."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Additional ledger notes or GST/account info (0 to 250 chars)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the party was created (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the party was last updated (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": ["userId", "name", "phone", "role", "notes", "createdAt", "updatedAt"]
+    },
+    "CashTransaction": {
+      "title": "CashTransaction",
+      "description": "Represents a Cash In (receipt) or Cash Out (payment) voucher entry inside a cash book.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "UID of the authenticated Google user who owns this voucher."
+        },
+        "bookId": {
+          "type": "string",
+          "description": "Document ID of the parent CashBook."
+        },
+        "type": {
+          "type": "string",
+          "enum": ["CASH_IN", "CASH_OUT"],
+          "description": "Voucher direction: CASH_IN (receipt/credit) or CASH_OUT (payment/debit)."
+        },
+        "amount": {
+          "type": "number",
+          "description": "Positive numeric transaction value (> 0)."
+        },
+        "remark": {
+          "type": "string",
+          "description": "Particulars or voucher narration (0 to 250 chars)."
+        },
+        "category": {
+          "type": "string",
+          "description": "Head of account / expense or income category (1 to 60 chars)."
+        },
+        "paymentMode": {
+          "type": "string",
+          "enum": ["Cash", "Bank Transfer", "UPI", "Cheque", "Card"],
+          "description": "Settlement mode for the voucher."
+        },
+        "partyId": {
+          "type": "string",
+          "description": "Optional linked Party document ID (empty string if unlinked)."
+        },
+        "partyName": {
+          "type": "string",
+          "description": "Denormalized party name for display and statement export (empty string if unlinked)."
+        },
+        "transactionDate": {
+          "type": "integer",
+          "description": "Epoch milliseconds representing the voucher date and time."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the voucher was recorded (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the voucher was last updated (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "bookId",
+        "type",
+        "amount",
+        "remark",
+        "category",
+        "paymentMode",
+        "partyId",
+        "partyName",
+        "transactionDate",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/cashbooks/{bookId}": {
+      "schema": { "$ref": "#/entities/CashBook" },
+      "description": "Per-user subcollection storing independent business cash books."
+    },
+    "/users/{userId}/parties/{partyId}": {
+      "schema": { "$ref": "#/entities/Party" },
+      "description": "Per-user subcollection storing customer, supplier, and staff party accounts."
+    },
+    "/users/{userId}/transactions/{txId}": {
+      "schema": { "$ref": "#/entities/CashTransaction" },
+      "description": "Per-user subcollection storing Cash In and Cash Out ledger vouchers."
+    }
+  }
+}

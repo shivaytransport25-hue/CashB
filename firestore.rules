@@ -1,0 +1,214 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Default-Deny Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Hardened Global Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidOptionalId(id) {
+      return id is string && id.size() <= 128 && (id.size() == 0 || id.matches('^[a-zA-Z0-9_\\-]+$'));
+    }
+
+    // Validation Blueprint: CashBook
+    function isValidCashBook(data, userId) {
+      return data.userId is string &&
+             data.userId.size() >= 1 &&
+             data.userId.size() <= 128 &&
+             data.userId == request.auth.uid &&
+             data.userId == userId &&
+             data.name is string &&
+             data.name.size() >= 1 &&
+             data.name.size() <= 80 &&
+             data.description is string &&
+             data.description.size() <= 500 &&
+             data.currencySymbol is string &&
+             data.currencySymbol.size() >= 1 &&
+             data.currencySymbol.size() <= 10 &&
+             data.createdAt is timestamp &&
+             data.createdAt <= request.time &&
+             data.updatedAt is timestamp &&
+             data.updatedAt <= request.time;
+    }
+
+    // Validation Blueprint: Party
+    function isValidParty(data, userId) {
+      return data.userId is string &&
+             data.userId.size() >= 1 &&
+             data.userId.size() <= 128 &&
+             data.userId == request.auth.uid &&
+             data.userId == userId &&
+             data.name is string &&
+             data.name.size() >= 1 &&
+             data.name.size() <= 80 &&
+             data.phone is string &&
+             data.phone.size() <= 30 &&
+             data.role is string &&
+             data.role in ['Customer', 'Supplier', 'Staff'] &&
+             data.notes is string &&
+             data.notes.size() <= 500 &&
+             data.createdAt is timestamp &&
+             data.createdAt <= request.time &&
+             data.updatedAt is timestamp &&
+             data.updatedAt <= request.time;
+    }
+
+    // Validation Blueprint: CashTransaction
+    function isValidCashTransaction(data, userId) {
+      return data.userId is string &&
+             data.userId.size() >= 1 &&
+             data.userId.size() <= 128 &&
+             data.userId == request.auth.uid &&
+             data.userId == userId &&
+             isValidId(data.bookId) &&
+             data.type is string &&
+             data.type in ['CASH_IN', 'CASH_OUT', 'TRANSFER'] &&
+             (data.amount is int || data.amount is float) &&
+             data.amount > 0 &&
+             data.amount <= 1000000000 &&
+             data.remark is string &&
+             data.remark.size() <= 500 &&
+             data.category is string &&
+             data.category.size() >= 1 &&
+             data.category.size() <= 60 &&
+             data.paymentMode is string &&
+             data.paymentMode in ['Cash', 'Bank Transfer', 'UPI', 'Cheque', 'Card'] &&
+             isValidOptionalId(data.partyId) &&
+             data.partyName is string &&
+             data.partyName.size() <= 80 &&
+             data.transactionDate is int &&
+             data.transactionDate > 0 &&
+             data.createdAt is timestamp &&
+             data.createdAt <= request.time &&
+             data.updatedAt is timestamp &&
+             data.updatedAt <= request.time;
+    }
+
+    // Collection 1: /users/{userId}/cashbooks/{bookId}
+    match /users/{userId}/cashbooks/{bookId} {
+      allow get: if isSignedIn() &&
+                    request.auth.uid == userId &&
+                    isValidId(bookId) &&
+                    existing().userId == request.auth.uid;
+
+      allow list: if isSignedIn() &&
+                     request.auth.uid == userId &&
+                     existing().userId == request.auth.uid;
+
+      allow create: if isSignedIn() &&
+                       request.auth.uid == userId &&
+                       isValidId(bookId) &&
+                       incoming().keys().hasAll(['userId', 'name', 'description', 'currencySymbol', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'name', 'description', 'currencySymbol', 'createdAt', 'updatedAt']) &&
+                       isValidCashBook(incoming(), userId);
+
+      allow update: if isSignedIn() &&
+                       isValidCashBook(incoming(), userId) &&
+                       request.auth.uid == userId &&
+                       isValidId(bookId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['name', 'description', 'currencySymbol', 'updatedAt']);
+
+      allow delete: if isSignedIn() &&
+                       request.auth.uid == userId &&
+                       isValidId(bookId) &&
+                       existing().userId == request.auth.uid;
+    }
+
+    // Collection 2: /users/{userId}/parties/{partyId}
+    match /users/{userId}/parties/{partyId} {
+      allow get: if isSignedIn() &&
+                    request.auth.uid == userId &&
+                    isValidId(partyId) &&
+                    existing().userId == request.auth.uid;
+
+      allow list: if isSignedIn() &&
+                     request.auth.uid == userId &&
+                     existing().userId == request.auth.uid;
+
+      allow create: if isSignedIn() &&
+                       request.auth.uid == userId &&
+                       isValidId(partyId) &&
+                       incoming().keys().hasAll(['userId', 'name', 'phone', 'role', 'notes', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'name', 'phone', 'role', 'notes', 'createdAt', 'updatedAt']) &&
+                       isValidParty(incoming(), userId);
+
+      allow update: if isSignedIn() &&
+                       isValidParty(incoming(), userId) &&
+                       request.auth.uid == userId &&
+                       isValidId(partyId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phone', 'role', 'notes', 'updatedAt']);
+
+      allow delete: if isSignedIn() &&
+                       request.auth.uid == userId &&
+                       isValidId(partyId) &&
+                       existing().userId == request.auth.uid;
+    }
+
+    // Collection 3: /users/{userId}/transactions/{txId}
+    match /users/{userId}/transactions/{txId} {
+      allow get: if isSignedIn() &&
+                    request.auth.uid == userId &&
+                    isValidId(txId) &&
+                    existing().userId == request.auth.uid;
+
+      allow list: if isSignedIn() &&
+                     request.auth.uid == userId &&
+                     existing().userId == request.auth.uid;
+
+      allow create: if isSignedIn() &&
+                       request.auth.uid == userId &&
+                       isValidId(txId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'bookId', 'type', 'amount', 'remark',
+                         'category', 'paymentMode', 'partyId', 'partyName',
+                         'transactionDate', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'bookId', 'type', 'amount', 'remark',
+                         'category', 'paymentMode', 'partyId', 'partyName',
+                         'transactionDate', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidCashTransaction(incoming(), userId);
+
+      allow update: if isSignedIn() &&
+                       isValidCashTransaction(incoming(), userId) &&
+                       request.auth.uid == userId &&
+                       isValidId(txId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().bookId == existing().bookId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'type', 'amount', 'remark', 'category', 'paymentMode',
+                         'partyId', 'partyName', 'transactionDate', 'updatedAt'
+                       ]);
+
+      allow delete: if isSignedIn() &&
+                       request.auth.uid == userId &&
+                       isValidId(txId) &&
+                       existing().userId == request.auth.uid;
+    }
+  }
+}

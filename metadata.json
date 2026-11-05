@@ -1,0 +1,6 @@
+{
+  "name": "Shivay CashBook",
+  "description": "Real-time cloud-synced business cash book, party ledger, and financial audit register.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

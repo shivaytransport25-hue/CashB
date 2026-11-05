@@ -1,0 +1,153 @@
+name: Build CashBook Cross-Platform Apps
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  # -------------------------------------------------------------
+  # 1. Automated Unit Tests & Code Verification
+  # -------------------------------------------------------------
+  test:
+    name: Run Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.x'
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        working-directory: cash_book_system
+        run: flutter pub get
+
+      - name: Run Financial Engine & Unit Tests
+        working-directory: cash_book_system
+        run: flutter test --coverage
+
+  # -------------------------------------------------------------
+  # 2. Build Android Release APK
+  # -------------------------------------------------------------
+  build-android:
+    name: Build Android APK
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.x'
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        working-directory: cash_book_system
+        run: flutter pub get
+
+      - name: Build Android Release APK
+        working-directory: cash_book_system
+        run: flutter build apk --release
+
+      - name: Upload Android APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CashBookPro-Android-APK
+          path: cash_book_system/build/app/outputs/flutter-apk/app-release.apk
+
+  # -------------------------------------------------------------
+  # 3. Build Windows Desktop Executable & Inno Setup Installer
+  # -------------------------------------------------------------
+  build-windows:
+    name: Build Windows Desktop .exe
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.x'
+          channel: 'stable'
+          cache: true
+
+      - name: Enable Windows Desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Install Dependencies
+        working-directory: cash_book_system
+        run: flutter pub get
+
+      - name: Build Windows Desktop Release
+        working-directory: cash_book_system
+        run: flutter build windows --release
+
+      - name: Compile Inno Setup Installer
+        uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
+        with:
+          path: cash_book_system/windows/installer_script.iss
+
+      - name: Upload Windows Installer Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CashBook-Windows-Setup-exe
+          path: cash_book_system/build/windows/installer/CashBook_Setup_v1.0.0.exe
+
+  # -------------------------------------------------------------
+  # 4. Build iOS Release Archive (.ipa) on macOS Runner
+  # -------------------------------------------------------------
+  build-ios:
+    name: Build iOS App (.ipa)
+    needs: test
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.x'
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        working-directory: cash_book_system
+        run: flutter pub get
+
+      - name: Build iOS Frameworks (No Codesign)
+        working-directory: cash_book_system
+        run: flutter build ios --release --no-codesign
+
+      - name: Package Payload to .ipa Archive
+        working-directory: cash_book_system
+        run: |
+          mkdir -p build/ios/iphoneos/Payload
+          cp -r build/ios/iphoneos/Runner.app build/ios/iphoneos/Payload/
+          cd build/ios/iphoneos
+          zip -r CashBookPro_v1.0.0.ipa Payload
+
+      - name: Upload iOS IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CashBookPro-iOS-IPA
+          path: cash_book_system/build/ios/iphoneos/CashBookPro_v1.0.0.ipa
+

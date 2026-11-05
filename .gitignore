@@ -1,0 +1,38 @@
+# Gradle & Android Build Outputs
+*.iml
+.gradle
+.kotlin
+/local.properties
+local.properties
+.externalNativeBuild
+.cxx
+/captures
+build/
+app/build/
+**/build/
+debug.keystore
+*-debug.log
+
+# IDE & Editor caches
+/.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Flutter temp artifacts
+.dart_tool/
+**/cash_book_system/.dart_tool/
+**/cash_book_system/build/
+**/cash_book_system/.flutter-plugins-dependencies
+
+# Operating System files
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.tmp
+
+# Environment & Secrets
+.env
+*.local

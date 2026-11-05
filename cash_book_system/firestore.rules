@@ -1,0 +1,112 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions for authentication and tenant isolation
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isUser(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function getMemberData(businessId) {
+      return get(/databases/$(database)/documents/businesses/$(businessId)/members/$(request.auth.uid)).data;
+    }
+
+    function isMember(businessId) {
+      return isAuthenticated() && exists(/databases/$(database)/documents/businesses/$(businessId)/members/$(request.auth.uid));
+    }
+
+    function hasRole(businessId, roles) {
+      return isMember(businessId) && getMemberData(businessId).role in roles;
+    }
+
+    function isOwner(businessId) {
+      return hasRole(businessId, ['owner']);
+    }
+
+    function isAdmin(businessId) {
+      return hasRole(businessId, ['owner', 'admin']);
+    }
+
+    function isAccountant(businessId) {
+      return hasRole(businessId, ['owner', 'admin', 'accountant']);
+    }
+
+    function canWriteTransaction(businessId) {
+      return hasRole(businessId, ['owner', 'admin', 'accountant', 'dataEntry']);
+    }
+
+    // User Profile Collection
+    match /users/{userId} {
+      allow read, write: if isUser(userId);
+    }
+
+    // Business Multi-Tenant Isolation Root
+    match /businesses/{businessId} {
+      allow read: if isMember(businessId);
+      allow create: if isAuthenticated();
+      allow update, delete: if isOwner(businessId);
+
+      // Business Memberships & Roles
+      match /members/{memberId} {
+        allow read: if isMember(businessId);
+        allow write: if isOwner(businessId);
+      }
+
+      // Accounts (Cash & Bank)
+      match /accounts/{accountId} {
+        allow read: if isMember(businessId);
+        allow create, update: if isAdmin(businessId);
+        allow delete: if isOwner(businessId);
+      }
+
+      // Categories
+      match /categories/{categoryId} {
+        allow read: if isMember(businessId);
+        allow write: if isAdmin(businessId);
+      }
+
+      // Parties (Customers, Suppliers, Employees)
+      match /parties/{partyId} {
+        allow read: if isMember(businessId);
+        allow write: if isAccountant(businessId);
+      }
+
+      // Financial Transactions
+      match /transactions/{transactionId} {
+        allow read: if isMember(businessId);
+        allow create: if canWriteTransaction(businessId) &&
+                         request.resource.data.amountPaise > 0 &&
+                         request.resource.data.businessId == businessId;
+        allow update: if isAccountant(businessId) &&
+                         // Prevent altering historical amounts once posted - corrections require reversal
+                         request.resource.data.amountPaise == resource.data.amountPaise;
+        // Never allow permanent deletion of financial records
+        allow delete: if false;
+      }
+
+      // Transfers
+      match /transfers/{transferId} {
+        allow read: if isMember(businessId);
+        allow create: if isAccountant(businessId);
+        allow update, delete: if false;
+      }
+
+      // Audit Logs (Append-only & Immutable)
+      match /audit_logs/{logId} {
+        allow read: if isAdmin(businessId);
+        allow create: if isMember(businessId);
+        allow update, delete: if false;
+      }
+
+      // Backups
+      match /backups/{backupId} {
+        allow read, write: if isOwner(businessId);
+      }
+    }
+  }
+}
+
