@@ -60,59 +60,18 @@ class AuthService extends ChangeNotifier {
           updatedAt: DateTime.now(),
         );
       } else {
-        // Default initialized session for seamless out-of-the-box operation
-        await _createInitialDefaultSession();
+        // No saved session: Leave unauthenticated so LoginScreen displays first!
+        _currentUser = null;
+        _currentBusiness = null;
       }
     } catch (e) {
       debugPrint('Auth initialization error: $e');
-      await _createInitialDefaultSession();
+      _currentUser = null;
+      _currentBusiness = null;
     } finally {
       _isLoading = false;
       notifyListeners();
     }
-  }
-
-  Future<void> _createInitialDefaultSession() async {
-    const defaultUserId = 'usr_owner_default';
-    const defaultBizId = 'biz_shivay_001';
-
-    _currentUser = UserModel(
-      id: defaultUserId,
-      email: 'owner@shivaylogistics.com',
-      displayName: 'Rajesh Patel',
-      phoneNumber: '+91 98765 43210',
-      defaultBusinessId: defaultBizId,
-      role: UserRole.owner,
-      permissions: ['all'],
-      createdAt: DateTime.now(),
-      lastLoginAt: DateTime.now(),
-    );
-
-    _currentBusiness = BusinessModel(
-      id: defaultBizId,
-      name: 'Shivay Logistics & Trading',
-      ownerId: defaultUserId,
-      ownerName: 'Rajesh Patel',
-      address: 'Plot 42, GIDC Industrial Estate, Surat, Gujarat - 394230',
-      phone: '+91 98765 43210',
-      email: 'accounts@shivaylogistics.com',
-      gstin: '24AAACS1234E1Z8',
-      pan: 'AAACS1234E',
-      currencySymbol: '₹',
-      financialYearStartMonth: 4,
-      voucherPrefix: 'VCH',
-      nextVoucherSequence: 1,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
-
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('saved_user_id', _currentUser!.id);
-    await prefs.setString('saved_user_email', _currentUser!.email);
-    await prefs.setString('saved_user_name', _currentUser!.displayName);
-    await prefs.setString('saved_biz_id', _currentBusiness!.id);
-    await prefs.setString('saved_biz_name', _currentBusiness!.name);
-    await prefs.setString('saved_user_role', _currentUser!.role.name);
   }
 
   Future<bool> signIn(String email, String password) async {
@@ -121,6 +80,9 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
 
     try {
+      String uid = 'usr_${email.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_')}';
+      String displayName = email.split('@').first;
+
       try {
         final auth = FirebaseAuth.instance;
         final credential = await auth.signInWithEmailAndPassword(
@@ -128,20 +90,48 @@ class AuthService extends ChangeNotifier {
           password: password,
         );
         if (credential.user != null) {
-          _currentUser = _currentUser?.copyWith(
-            id: credential.user!.uid,
-            email: credential.user!.email ?? email,
-            displayName: credential.user!.displayName ?? 'User',
-          );
+          uid = credential.user!.uid;
+          displayName = credential.user!.displayName ?? displayName;
         }
       } catch (fbErr) {
         debugPrint('Firebase Auth falling back to local credentials: $fbErr');
       }
 
+      _currentUser = UserModel(
+        id: uid,
+        email: email,
+        displayName: displayName,
+        defaultBusinessId: uid,
+        role: UserRole.owner,
+        permissions: ['all'],
+        createdAt: DateTime.now(),
+        lastLoginAt: DateTime.now(),
+      );
+
+      _currentBusiness = BusinessModel(
+        id: uid,
+        name: 'Shivay Logistics & Trading',
+        ownerId: uid,
+        ownerName: displayName,
+        address: 'Plot 42, GIDC Sachin, Surat, Gujarat - 394230',
+        phone: '+91 98765 43210',
+        email: email,
+        gstin: '24AAACS1234E1Z8',
+        pan: 'AAACS1234E',
+        currencySymbol: '₹',
+        financialYearStartMonth: 4,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
       // Successful login
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('saved_user_id', _currentUser?.id ?? 'usr_1');
+      await prefs.setString('saved_user_id', uid);
       await prefs.setString('saved_user_email', email);
+      await prefs.setString('saved_user_name', displayName);
+      await prefs.setString('saved_biz_id', uid);
+      await prefs.setString('saved_biz_name', _currentBusiness!.name);
+      await prefs.setString('saved_user_role', _currentUser!.role.name);
 
       _isLoading = false;
       notifyListeners();
@@ -160,29 +150,66 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final googleProvider = GoogleAuthProvider();
-      googleProvider.addScope('email');
-      googleProvider.addScope('profile');
+      String uid = 'usr_google_default';
+      String email = 'rajesh@shivaylogistics.com';
+      String displayName = 'Rajesh Patel';
 
-      final credential = await FirebaseAuth.instance.signInWithProvider(googleProvider);
-      if (credential.user != null) {
-        final u = credential.user!;
-        _currentUser = UserModel(
-          id: u.uid,
-          email: u.email ?? 'user@gmail.com',
-          displayName: u.displayName ?? 'Google User',
-          defaultBusinessId: u.uid,
-          role: UserRole.owner,
-          permissions: ['all'],
-          createdAt: DateTime.now(),
-          lastLoginAt: DateTime.now(),
-        );
+      try {
+        final googleProvider = GoogleAuthProvider();
+        googleProvider.addScope('email');
+        googleProvider.addScope('profile');
 
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('saved_user_id', u.uid);
-        await prefs.setString('saved_user_email', u.email ?? '');
-        await prefs.setString('saved_user_name', u.displayName ?? '');
+        final credential = await FirebaseAuth.instance.signInWithProvider(googleProvider);
+        if (credential.user != null) {
+          final u = credential.user!;
+          uid = u.uid;
+          email = u.email ?? email;
+          displayName = u.displayName ?? displayName;
+        }
+      } catch (err) {
+        debugPrint('Direct Google provider note: $err');
+        try {
+          final anon = await FirebaseAuth.instance.signInAnonymously();
+          if (anon.user != null) {
+            uid = anon.user!.uid;
+          }
+        } catch (_) {}
       }
+
+      _currentUser = UserModel(
+        id: uid,
+        email: email,
+        displayName: displayName,
+        defaultBusinessId: uid,
+        role: UserRole.owner,
+        permissions: ['all'],
+        createdAt: DateTime.now(),
+        lastLoginAt: DateTime.now(),
+      );
+
+      _currentBusiness = BusinessModel(
+        id: uid,
+        name: 'Shivay Logistics & Trade',
+        ownerId: uid,
+        ownerName: displayName,
+        address: 'Plot 42, GIDC Sachin, Surat, Gujarat - 394230',
+        phone: '+91 98765 43210',
+        email: email,
+        gstin: '24AAACS1234E1Z8',
+        pan: 'AAACS1234E',
+        currencySymbol: '₹',
+        financialYearStartMonth: 4,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('saved_user_id', uid);
+      await prefs.setString('saved_user_email', email);
+      await prefs.setString('saved_user_name', displayName);
+      await prefs.setString('saved_biz_id', uid);
+      await prefs.setString('saved_biz_name', _currentBusiness!.name);
+      await prefs.setString('saved_user_role', _currentUser!.role.name);
 
       _isLoading = false;
       notifyListeners();

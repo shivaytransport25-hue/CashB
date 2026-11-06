@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import 'accounts/accounts_screen.dart';
+import 'authentication/login_screen.dart';
 import 'core/animations/bounce_button.dart';
 import 'core/theme/theme_provider.dart';
 import 'dashboard/dashboard_screen.dart';
@@ -32,15 +33,128 @@ class CashBookApp extends StatelessWidget {
         ChangeNotifierProvider.value(value: SyncEngine.instance),
         ChangeNotifierProvider(create: (_) => ThemeProvider()..loadPreferences()),
       ],
-      child: Consumer<ThemeProvider>(
-        builder: (context, themeProvider, _) {
+      child: Consumer2<ThemeProvider, AuthService>(
+        builder: (context, themeProvider, auth, _) {
           return MaterialApp(
             title: 'Cash Book Management System',
             debugShowCheckedModeBanner: false,
             theme: themeProvider.themeData,
-            home: const MainShell(),
+            home: auth.isLoading
+                ? const CashBookStartupLoadingScreen()
+                : (auth.isAuthenticated
+                    ? const MainShell()
+                    : LoginScreen(onLoginSuccess: () {})),
           );
         },
+      ),
+    );
+  }
+}
+
+class CashBookStartupLoadingScreen extends StatefulWidget {
+  const CashBookStartupLoadingScreen({super.key});
+
+  @override
+  State<CashBookStartupLoadingScreen> createState() => _CashBookStartupLoadingScreenState();
+}
+
+class _CashBookStartupLoadingScreenState extends State<CashBookStartupLoadingScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animController;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat(reverse: true);
+    _scaleAnimation = Tween<double>(begin: 0.95, end: 1.05).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ScaleTransition(
+              scale: _scaleAnimation,
+              child: Container(
+                width: 90,
+                height: 90,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFF59E0B), Color(0xFFD97706), Color(0xFF1E3A8A)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(22),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFF59E0B).withOpacity(0.35),
+                      blurRadius: 25,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.account_balance_wallet,
+                  size: 46,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            const SizedBox(height: 28),
+            Text(
+              'Shivay CashBook Pro',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurface,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Secure Cloud & Offline Financial Ledger',
+              style: TextStyle(
+                fontSize: 13,
+                color: theme.colorScheme.onSurface.withOpacity(0.6),
+              ),
+            ),
+            const SizedBox(height: 36),
+            SizedBox(
+              width: 32,
+              height: 32,
+              child: CircularProgressIndicator(
+                strokeWidth: 3,
+                valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Initializing Secure Session...',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

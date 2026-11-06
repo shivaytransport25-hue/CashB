@@ -143,7 +143,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 14),
 
-                OutlinedButton.icon(
+                OutlinedButton(
                   onPressed: auth.isLoading
                       ? null
                       : () async {
@@ -152,12 +152,35 @@ class _LoginScreenState extends State<LoginScreen> {
                             widget.onLoginSuccess();
                           }
                         },
-                  icon: const Icon(Icons.g_mobiledata, size: 28, color: Colors.red),
-                  label: const Text('Sign in with Google', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    side: BorderSide(color: Colors.grey.shade400),
                   ),
+                  child: auth.isLoading
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            const Text('Authenticating with Google...', style: TextStyle(fontWeight: FontWeight.w600)),
+                          ],
+                        )
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.g_mobiledata, size: 28, color: Colors.red),
+                            const SizedBox(width: 8),
+                            const Text('Sign in with Google', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
                 ),
                 const SizedBox(height: 20),
 

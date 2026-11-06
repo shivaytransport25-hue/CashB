@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Shivay CashBook</string>
+    <string name="default_web_client_id" translatable="false">266747615266-js33duggusre95kg20b4habn2aae8etb.apps.googleusercontent.com</string>
 </resources>
