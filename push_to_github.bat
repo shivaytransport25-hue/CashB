@@ -12,3 +12,4 @@ if %ERRORLEVEL% EQU 0 (
     echo [NOTE] If prompted, sign in with GitHub in the browser window or enter your Personal Access Token (PAT).
 )
 pause
+
