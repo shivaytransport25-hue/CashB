@@ -154,6 +154,48 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  Future<bool> signInWithGoogle() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final googleProvider = GoogleAuthProvider();
+      googleProvider.addScope('email');
+      googleProvider.addScope('profile');
+
+      final credential = await FirebaseAuth.instance.signInWithProvider(googleProvider);
+      if (credential.user != null) {
+        final u = credential.user!;
+        _currentUser = UserModel(
+          id: u.uid,
+          email: u.email ?? 'user@gmail.com',
+          displayName: u.displayName ?? 'Google User',
+          defaultBusinessId: u.uid,
+          role: UserRole.owner,
+          permissions: ['all'],
+          createdAt: DateTime.now(),
+          lastLoginAt: DateTime.now(),
+        );
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('saved_user_id', u.uid);
+        await prefs.setString('saved_user_email', u.email ?? '');
+        await prefs.setString('saved_user_name', u.displayName ?? '');
+      }
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint('Google Sign-In note/error: $e');
+      _errorMessage = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
   Future<void> signOut() async {
     try {
       await FirebaseAuth.instance.signOut();

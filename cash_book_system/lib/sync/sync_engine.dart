@@ -109,7 +109,7 @@ class SyncEngine extends ChangeNotifier {
 
     if (item.entityType == 'transaction') {
       final docRef = firestore
-          .collection('businesses')
+          .collection('users')
           .doc(item.businessId)
           .collection('transactions')
           .doc(item.entityId);
@@ -121,21 +121,21 @@ class SyncEngine extends ChangeNotifier {
       }
     } else if (item.entityType == 'account') {
       await firestore
-          .collection('businesses')
+          .collection('users')
           .doc(item.businessId)
           .collection('accounts')
           .doc(item.entityId)
           .set(payload, SetOptions(merge: true));
     } else if (item.entityType == 'party') {
       await firestore
-          .collection('businesses')
+          .collection('users')
           .doc(item.businessId)
           .collection('parties')
           .doc(item.entityId)
           .set(payload, SetOptions(merge: true));
     } else if (item.entityType == 'category') {
       await firestore
-          .collection('businesses')
+          .collection('users')
           .doc(item.businessId)
           .collection('categories')
           .doc(item.entityId)
@@ -150,7 +150,7 @@ class SyncEngine extends ChangeNotifier {
     try {
       final firestore = FirebaseFirestore.instance;
       _remoteTxnSubscription = firestore
-          .collection('businesses')
+          .collection('users')
           .doc(businessId)
           .collection('transactions')
           .snapshots()

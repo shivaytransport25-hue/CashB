@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../core/constants/enums.dart';
 import '../models/party_model.dart';
 import '../models/transaction_model.dart';
 

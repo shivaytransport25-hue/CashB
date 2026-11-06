@@ -62,12 +62,12 @@ class _TransactionEntryScreenState extends State<TransactionEntryScreen>
     if (widget.existingTransaction != null) {
       final t = widget.existingTransaction!;
       _amountController.text = (t.amountPaise / 100.0).toStringAsFixed(2);
-      _narrationController.text = t.narration;
+      _narrationController.text = t.description ?? '';
       _refController.text = t.referenceNumber ?? '';
       _selectedAccountId = t.accountId;
       _selectedPartyId = t.partyId;
       _selectedCategoryId = t.categoryId;
-      _paymentMode = t.paymentMode ?? 'Cash';
+      _paymentMode = t.paymentMode;
       _partyTextController.text = t.partyName ?? '';
     }
 
@@ -227,7 +227,7 @@ class _TransactionEntryScreenState extends State<TransactionEntryScreen>
         partyId: _selectedPartyId,
         categoryId: _selectedCategoryId,
         paymentMode: _paymentMode,
-        narration: _narrationController.text.trim(),
+        description: _narrationController.text.trim(),
         referenceNumber: _refController.text.trim().isEmpty ? null : _refController.text.trim(),
         transactionDate: DateFormatter.formatDate(_selectedDate),
         updatedAt: DateTime.now(),

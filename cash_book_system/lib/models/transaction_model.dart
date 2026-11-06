@@ -225,19 +225,25 @@ class TransactionModel {
     return {
       'id': id,
       'businessId': businessId,
+      'userId': businessId,
+      'bookId': 'main_book',
       'voucherNumber': voucherNumber,
       'transactionDate': transactionDate,
       'transactionTime': transactionTime,
       'transactionType': transactionType.name,
+      'type': transactionType.isExpense ? 'CASH_OUT' : (transactionType.isTransfer ? 'TRANSFER' : 'CASH_IN'),
       'accountId': accountId,
       'targetAccountId': targetAccountId,
       'transferId': transferId,
       'categoryId': categoryId,
+      'category': categoryName ?? (transactionType.isExpense ? 'Fuel & Diesel' : 'Freight Revenue'),
       'partyId': partyId,
-      'partyName': partyName,
+      'partyName': partyName ?? '',
       'description': description,
+      'remark': description ?? '',
       'paymentMode': paymentMode,
       'amountPaise': amountPaise,
+      'amount': amountPaise / 100.0,
       'referenceNumber': referenceNumber,
       'attachmentUrls': attachmentUrls,
       'status': status.name,
@@ -254,25 +260,40 @@ class TransactionModel {
   }
 
   factory TransactionModel.fromFirestore(Map<String, dynamic> json) {
+    final rawAmount = json['amountPaise'] ?? (json['amount'] != null ? ((json['amount'] as num) * 100).toInt() : 0);
+    final rawType = json['transactionType'] ?? (json['type'] == 'CASH_OUT' ? 'cashPaid' : (json['type'] == 'TRANSFER' ? 'transfer' : 'cashReceived'));
+    final rawDesc = json['description'] ?? json['remark'];
+    final idStr = (json['id'] ?? '').toString();
+    final rawVch = json['voucherNumber'] ?? (idStr.isNotEmpty ? 'VCH-' + (idStr.length >= 6 ? idStr.substring(0, 6).toUpperCase() : idStr.toUpperCase()) : 'VCH-AUTO');
+
+    DateTime parseDate(dynamic d) {
+      if (d == null) return DateTime.now();
+      if (d is DateTime) return d;
+      if (d is String) {
+        try { return DateTime.parse(d); } catch (_) { return DateTime.now(); }
+      }
+      return DateTime.now();
+    }
+
     return TransactionModel(
-      id: json['id'] as String,
-      businessId: json['businessId'] as String,
-      voucherNumber: json['voucherNumber'] as String,
-      transactionDate: json['transactionDate'] as String,
-      transactionTime: json['transactionTime'] as String,
+      id: (json['id'] ?? json['txId'] ?? '').toString(),
+      businessId: (json['businessId'] ?? json['userId'] ?? '').toString(),
+      voucherNumber: rawVch.toString(),
+      transactionDate: (json['transactionDate'] ?? '').toString(),
+      transactionTime: (json['transactionTime'] ?? '12:00 PM').toString(),
       transactionType: TransactionType.values.firstWhere(
-        (e) => e.name == json['transactionType'],
+        (e) => e.name == rawType,
         orElse: () => TransactionType.cashReceived,
       ),
-      accountId: json['accountId'] as String,
+      accountId: (json['accountId'] ?? 'default_acc').toString(),
       targetAccountId: json['targetAccountId'] as String?,
       transferId: json['transferId'] as String?,
       categoryId: json['categoryId'] as String?,
       partyId: json['partyId'] as String?,
       partyName: json['partyName'] as String?,
-      description: json['description'] as String?,
-      paymentMode: json['paymentMode'] as String,
-      amountPaise: json['amountPaise'] as int,
+      description: rawDesc?.toString(),
+      paymentMode: (json['paymentMode'] ?? 'Cash').toString(),
+      amountPaise: (rawAmount is num) ? rawAmount.toInt() : 0,
       referenceNumber: json['referenceNumber'] as String?,
       attachmentUrls: (json['attachmentUrls'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
       status: TransactionStatus.values.firstWhere(
@@ -282,12 +303,12 @@ class TransactionModel {
       reversalReason: json['reversalReason'] as String?,
       reversedTransactionId: json['reversedTransactionId'] as String?,
       originalTransactionId: json['originalTransactionId'] as String?,
-      createdBy: json['createdBy'] as String,
-      createdByName: json['createdByName'] as String,
-      deviceId: json['deviceId'] as String,
-      idempotencyKey: json['idempotencyKey'] as String,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      createdBy: (json['createdBy'] ?? 'user').toString(),
+      createdByName: (json['createdByName'] ?? 'User').toString(),
+      deviceId: (json['deviceId'] ?? 'device').toString(),
+      idempotencyKey: (json['idempotencyKey'] ?? '').toString(),
+      createdAt: parseDate(json['createdAt']),
+      updatedAt: parseDate(json['updatedAt']),
       syncStatus: SyncStatus.synced,
     );
   }

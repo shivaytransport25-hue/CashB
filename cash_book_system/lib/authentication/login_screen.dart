@@ -129,6 +129,36 @@ class _LoginScreenState extends State<LoginScreen> {
                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                       : const Text('Sign In', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
                 ),
+                const SizedBox(height: 14),
+
+                Row(
+                  children: const [
+                    Expanded(child: Divider()),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      child: Text('OR', style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w600)),
+                    ),
+                    Expanded(child: Divider()),
+                  ],
+                ),
+                const SizedBox(height: 14),
+
+                OutlinedButton.icon(
+                  onPressed: auth.isLoading
+                      ? null
+                      : () async {
+                          final success = await auth.signInWithGoogle();
+                          if (success) {
+                            widget.onLoginSuccess();
+                          }
+                        },
+                  icon: const Icon(Icons.g_mobiledata, size: 28, color: Colors.red),
+                  label: const Text('Sign in with Google', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
                 const SizedBox(height: 20),
 
                 Container(

@@ -750,8 +750,11 @@ class AccountingService extends ChangeNotifier {
         if (accIdx != -1) {
           final oldAcc = _accounts[accIdx];
           int revertedAcc = oldAcc.currentBalancePaise;
-          if (oldTxn.isIncome) revertedAcc -= oldTxn.amountPaise;
-          else if (oldTxn.isExpense) revertedAcc += oldTxn.amountPaise;
+          if (oldTxn.isIncome) {
+            revertedAcc -= oldTxn.amountPaise;
+          } else if (oldTxn.isExpense) {
+            revertedAcc += oldTxn.amountPaise;
+          }
           await _db.updateAccountBalance(oldAcc.id, revertedAcc);
         }
 
@@ -759,8 +762,11 @@ class AccountingService extends ChangeNotifier {
           final pIdx = _parties.indexWhere((p) => p.id == oldTxn.partyId);
           if (pIdx != -1) {
             int revertedParty = _parties[pIdx].currentBalancePaise;
-            if (oldTxn.isIncome) revertedParty += oldTxn.amountPaise;
-            else if (oldTxn.isExpense) revertedParty -= oldTxn.amountPaise;
+            if (oldTxn.isIncome) {
+              revertedParty += oldTxn.amountPaise;
+            } else if (oldTxn.isExpense) {
+              revertedParty -= oldTxn.amountPaise;
+            }
             await _db.updatePartyBalance(_parties[pIdx].id, revertedParty);
           }
         }
@@ -771,8 +777,11 @@ class AccountingService extends ChangeNotifier {
       if (newAccIdx != -1) {
         final newAcc = _accounts[newAccIdx];
         int newAccBal = newAcc.currentBalancePaise;
-        if (updatedTransaction.isIncome) newAccBal += updatedTransaction.amountPaise;
-        else if (updatedTransaction.isExpense) newAccBal -= updatedTransaction.amountPaise;
+        if (updatedTransaction.isIncome) {
+          newAccBal += updatedTransaction.amountPaise;
+        } else if (updatedTransaction.isExpense) {
+          newAccBal -= updatedTransaction.amountPaise;
+        }
         await _db.updateAccountBalance(newAcc.id, newAccBal);
       }
 
@@ -780,8 +789,11 @@ class AccountingService extends ChangeNotifier {
         final pIdx = _parties.indexWhere((p) => p.id == updatedTransaction.partyId);
         if (pIdx != -1) {
           int newPartyBal = _parties[pIdx].currentBalancePaise;
-          if (updatedTransaction.isIncome) newPartyBal -= updatedTransaction.amountPaise;
-          else if (updatedTransaction.isExpense) newPartyBal += updatedTransaction.amountPaise;
+          if (updatedTransaction.isIncome) {
+            newPartyBal -= updatedTransaction.amountPaise;
+          } else if (updatedTransaction.isExpense) {
+            newPartyBal += updatedTransaction.amountPaise;
+          }
           await _db.updatePartyBalance(_parties[pIdx].id, newPartyBal);
         }
       }
