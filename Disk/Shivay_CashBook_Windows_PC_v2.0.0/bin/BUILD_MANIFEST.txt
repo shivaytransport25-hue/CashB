@@ -1,0 +1,11 @@
+SHIVAY CASHBOOK - RELEASE BUILD v2.0.0
+======================================
+Build Timestamp: 2026-11-06 04:00:37 UTC
+Features Included:
+- Minimalist Progressive Disclosure UI & Modular Cards
+- Voucher Entry Edit & Delete with Confirmation Dialog
+- Settings Tab: Profile Photo, Operator Username & Password/PIN App Lock
+- 1-Tap Petty Cash (Chhote-Mote Kharche) & Quick Amount Chips
+- Calendar Date Picker & Clock Time Picker
+- Dynamic Color + Light / Dark / System Mode + 6 Color Themes
+- Real-Time Firebase Firestore Cloud Sync

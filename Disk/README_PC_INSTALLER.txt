@@ -1,31 +1,25 @@
 =====================================================================
-SHIVAY CASHBOOK - PC SOFTWARE (WINDOWS DESKTOP INSTALLER .EXE)
-Inno Setup 6 Build Package
+SHIVAY CASHBOOK v2.0.0 - ALL 3 PLATFORM BUILDS (/Disk)
+1. Android APK  : ShivayCashBook-Android-v2.0.0.apk (and v1.0.0.apk)
+2. iOS IPA      : ShivayCashBook-iOS-v2.0.0.ipa (and v1.0.0.ipa)
+3. Windows PC   : Shivay_CashBook_Windows_PC_v2.0.0.zip
+                  + shivay_cashbook_inno_setup.iss + build_windows_exe.bat
 =====================================================================
 
-To create the Windows Desktop Setup Executable (Shivay_CashBook_Setup_v1.0.0_x64.exe):
+WHAT'S NEW IN BUILD v2.0.0:
+---------------------------
+- Minimalist Progressive Disclosure UI with modular cards & ample white space
+- Expandable Voucher Cards with explicit Edit Entry (एडिट) & Delete (डिलीट) buttons
+- Delete Confirmation Dialog + Back-Date Edit/Delete Protection Lock
+- 4th Bottom Tab: Settings with Profile Photo Picker, Operator Username & Password/PIN Lock
+- 1-Tap Petty Cash ("छोटे-मोटे फुटकर खर्चे") templates & Quick Amount Adder (+₹10 to +₹500)
+- Interactive Calendar Date Picker + Clock Time Picker
+- Centralized Theme Provider: Material 3 Dynamic Color + Light / Dark / System Mode + 6 Palettes
+- Real-Time Firebase Cloud Sync for Cash Books, Parties, and Vouchers
 
-METHOD 1: ONE-CLICK BATCH FILE (Recommended for Windows)
----------------------------------------------------------
-1. Install Inno Setup 6 on your Windows PC from:
-   https://jrsoftware.org/isdl.php
-   (Or run: winget install JRSoftware.InnoSetup)
-2. Double-click "build_windows_exe.bat".
-3. The setup executable will be compiled and placed into:
-   dist\windows\output\Shivay_CashBook_Setup_v1.0.0_x64.exe
-
-METHOD 2: INNO SETUP GUI COMPILER
-----------------------------------
-1. Open Inno Setup Compiler.
-2. Open file "shivay_cashbook_inno_setup.iss".
-3. Click "Build" -> "Compile" (or press Ctrl + F9).
-4. The generated installer will appear in the output folder.
-
-WHAT THE INSTALLER DOES ON WINDOWS PC:
+HOW TO BUILD / INSTALL WINDOWS PC .EXE:
 ---------------------------------------
-- Installs 64-bit Shivay CashBook Desktop Accounting software.
-- Creates Desktop shortcut & Start Menu group.
-- Registers .scb (Shivay Cash Book) backup file associations.
-- Includes full offline SQLite engine and real-time cloud sync.
-- Supports PDF statement export, A4 receipt printing, and Excel CSV.
+1. Install Inno Setup 6 on Windows (https://jrsoftware.org/isdl.php)
+2. Run "build_windows_exe.bat" or compile "shivay_cashbook_inno_setup.iss"
+3. Output installer: output\Shivay_CashBook_Setup_v2.0.0_x64.exe
 =====================================================================

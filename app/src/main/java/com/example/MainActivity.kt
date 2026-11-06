@@ -468,6 +468,9 @@ fun MainLedgerAppContent(
                             voucherSheetType = tx.type
                             showVoucherSheet = true
                         },
+                        onDeleteTransactionClick = { tx ->
+                            cashBookViewModel.deleteTransaction(tx.id)
+                        },
                         onSearchQueryChange = cashBookViewModel::updateSearchQuery,
                         onDatePresetChange = cashBookViewModel::updateDatePreset,
                         onCustomDateRangeClick = { showCustomDateRangeDialog = true },
@@ -522,6 +525,15 @@ fun MainLedgerAppContent(
                             preselectedPartyForVoucher = party
                             voucherSheetType = defaultType
                             showVoucherSheet = true
+                        },
+                        onEditTransactionClick = { tx ->
+                            editingTransaction = tx
+                            preselectedPartyForVoucher = null
+                            voucherSheetType = tx.type
+                            showVoucherSheet = true
+                        },
+                        onDeleteTransactionClick = { tx ->
+                            cashBookViewModel.deleteTransaction(tx.id)
                         },
                         onExportPartyStatement = { party ->
                             try {

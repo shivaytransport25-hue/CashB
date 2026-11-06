@@ -1,10 +1,17 @@
 ; =====================================================================
 ; Shivay CashBook - Inno Setup 6 Script for Windows Desktop (x64)
-; Produces: Shivay_CashBook_Setup_v1.0.0_x64.exe
+; Produces: Shivay_CashBook_Setup_v2.0.0_x64.exe
+; Build Includes:
+;   - Minimalist Progressive Disclosure Ledger UI
+;   - Voucher Entry Edit & Delete with Back-Date Protection
+;   - Operator Username, PIN/Password App Lock & Profile Photo
+;   - 1-Tap Petty Cash (Chhote-Mote Kharche) & Calendar/Clock Picker
+;   - Dynamic Color + Light / Dark / System Display Mode
+;   - Real-Time Firebase Cloud Sync & PDF/CSV/JSON Export
 ; =====================================================================
 
 #define MyAppName "Shivay CashBook"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "2.0.0"
 #define MyAppPublisher "Shivay Technologies Pvt. Ltd."
 #define MyAppURL "https://shivaycashbook.com"
 #define MyAppExeName "ShivayCashBook.exe"
@@ -35,14 +42,14 @@ ArchitecturesInstallIn64BitMode=x64compatible
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 OutputDir=output
-OutputBaseFilename=Shivay_CashBook_Setup_v1.0.0_x64
+OutputBaseFilename=Shivay_CashBook_Setup_v2.0.0_x64
 Compression=lzma2/ultra64
 SolidCompression=yes
 DisableDirPage=no
 DisableProgramGroupPage=no
 VersionInfoVersion={#MyAppVersion}
 VersionInfoCompany={#MyAppPublisher}
-VersionInfoDescription={#MyAppName} Desktop Financial Management System
+VersionInfoDescription={#MyAppName} Desktop Financial Management System (v{#MyAppVersion})
 VersionInfoCopyright=Copyright (C) 2026 {#MyAppPublisher}
 
 [Languages]
@@ -61,7 +68,7 @@ Source: "bin\data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs
 ; Templates, fonts, and assets
 Source: "assets\*"; DestDir: "{app}\assets"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; Sample documentation and README
-Source: "..\README.md"; DestDir: "{app}"; DestName: "User_Manual.txt"; Flags: ignoreversion
+Source: "README_PC_INSTALLER.txt"; DestDir: "{app}"; DestName: "User_Manual.txt"; Flags: ignoreversion
 
 [Registry]
 ; Register .scb file extension for Shivay CashBook Backup files

@@ -109,6 +109,8 @@ fun PartyLedgerScreen(
     onDeletePartyClick: (String) -> Unit,
     onViewPartyTransactions: (Party) -> Unit,
     onSettlePartyClick: (party: Party, defaultType: String, defaultAmount: Double) -> Unit,
+    onEditTransactionClick: (CashTransaction) -> Unit = {},
+    onDeleteTransactionClick: (CashTransaction) -> Unit = {},
     onExportPartyStatement: (Party) -> Unit = {},
     onSharePartyReminder: (Party, Double) -> Unit = { _, _ -> }
 ) {
@@ -116,6 +118,7 @@ fun PartyLedgerScreen(
     var selectedRoleFilter by remember { mutableStateOf<String?>(null) }
     var selectedBalanceFilter by remember { mutableStateOf(PartyBalanceFilter.ALL) }
     var selectedDatePreset by remember { mutableStateOf(DateFilterPreset.ALL_TIME) }
+    var showPartyFiltersDrawer by remember { mutableStateOf(false) }
     var selectedPassbookParty by remember { mutableStateOf<PartyBalanceSummary?>(null) }
 
     val currency = uiState.activeBookSummary.currencySymbol
@@ -172,6 +175,10 @@ fun PartyLedgerScreen(
         }
     }
 
+    val activeFilterCount = (if (selectedRoleFilter != null) 1 else 0) +
+        (if (selectedBalanceFilter != PartyBalanceFilter.ALL) 1 else 0) +
+        (if (selectedDatePreset != DateFilterPreset.ALL_TIME) 1 else 0)
+
     Column(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             modifier = Modifier
@@ -180,27 +187,29 @@ fun PartyLedgerScreen(
                 .testTag("party_ledger_list"),
             contentPadding = PaddingValues(bottom = 16.dp)
         ) {
-            // 1. Party Khata Summary Box (To Receive vs To Pay)
+            // 1. Minimalist Party Khata Summary Card
             item {
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 10.dp),
-                    shape = RoundedCornerShape(4.dp),
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    shape = RoundedCornerShape(8.dp),
                     color = MaterialTheme.colorScheme.surface,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                 ) {
-                    Column(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.65f))
-                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "PARTY KHATA & ACCOUNT SUMMARY",
+                                text = "PARTY KHATA SUMMARY",
                                 style = MaterialTheme.typography.labelMedium.copy(
                                     fontFamily = JetBrainsMonoFamily,
                                     fontWeight = FontWeight.Bold
@@ -217,67 +226,74 @@ fun PartyLedgerScreen(
                             )
                         }
 
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outline)
-
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "YOU'LL GET (RECEIVABLE / DR)",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = StatementExportHelper.formatCurrency(
-                                        uiState.totalReceivable,
-                                        currency
-                                    ),
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        fontFamily = JetBrainsMonoFamily,
-                                        fontWeight = FontWeight.Bold
-                                    ),
-                                    color = CashInGreen
-                                )
+                            Surface(
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(6.dp),
+                                color = CashInGreen.copy(alpha = 0.08f),
+                                border = BorderStroke(1.dp, CashInGreen.copy(alpha = 0.25f))
+                            ) {
+                                Column(modifier = Modifier.padding(12.dp)) {
+                                    Text(
+                                        text = "YOU'LL GET (Dr)",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = CashInGreen
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = StatementExportHelper.formatCurrency(
+                                            uiState.totalReceivable,
+                                            currency
+                                        ),
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontFamily = JetBrainsMonoFamily,
+                                            fontWeight = FontWeight.Bold
+                                        ),
+                                        color = CashInGreen
+                                    )
+                                }
                             }
 
-                            Column(
+                            Surface(
                                 modifier = Modifier.weight(1f),
-                                horizontalAlignment = Alignment.End
+                                shape = RoundedCornerShape(6.dp),
+                                color = CashOutRed.copy(alpha = 0.08f),
+                                border = BorderStroke(1.dp, CashOutRed.copy(alpha = 0.25f))
                             ) {
-                                Text(
-                                    text = "YOU'LL GIVE (PAYABLE / CR)",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = StatementExportHelper.formatCurrency(
-                                        uiState.totalPayable,
-                                        currency
-                                    ),
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        fontFamily = JetBrainsMonoFamily,
-                                        fontWeight = FontWeight.Bold
-                                    ),
-                                    color = CashOutRed
-                                )
+                                Column(modifier = Modifier.padding(12.dp)) {
+                                    Text(
+                                        text = "YOU'LL GIVE (Cr)",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = CashOutRed
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = StatementExportHelper.formatCurrency(
+                                            uiState.totalPayable,
+                                            currency
+                                        ),
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontFamily = JetBrainsMonoFamily,
+                                            fontWeight = FontWeight.Bold
+                                        ),
+                                        color = CashOutRed
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
 
-            // 2. Search & Multi-Filter Strip (Role, Balance Position, Activity Date) + Add Party Button
+            // 2. Search Bar + Progressive Disclosure Filter Drawer + Add Party Button
             item {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 4.dp)
+                        .padding(horizontal = 16.dp, vertical = 4.dp)
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -289,7 +305,7 @@ fun PartyLedgerScreen(
                             onValueChange = { searchQuery = it },
                             placeholder = {
                                 Text(
-                                    "Search party name, phone, or date (DD-MM-YYYY)...",
+                                    "Search party, phone, or date...",
                                     style = MaterialTheme.typography.bodySmall
                                 )
                             },
@@ -312,7 +328,7 @@ fun PartyLedgerScreen(
                                 }
                             },
                             singleLine = true,
-                            shape = RoundedCornerShape(4.dp),
+                            shape = RoundedCornerShape(6.dp),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedContainerColor = MaterialTheme.colorScheme.surface,
                                 unfocusedContainerColor = MaterialTheme.colorScheme.surface
@@ -322,9 +338,21 @@ fun PartyLedgerScreen(
                                 .testTag("search_parties_input")
                         )
 
+                        OutlinedButton(
+                            onClick = { showPartyFiltersDrawer = !showPartyFiltersDrawer },
+                            shape = RoundedCornerShape(6.dp),
+                            contentPadding = PaddingValues(horizontal = 10.dp),
+                            modifier = Modifier.height(54.dp)
+                        ) {
+                            Text(
+                                text = if (activeFilterCount > 0) "Filters ($activeFilterCount)" else "Filters",
+                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold)
+                            )
+                        }
+
                         Button(
                             onClick = onAddPartyClick,
-                            shape = RoundedCornerShape(4.dp),
+                            shape = RoundedCornerShape(6.dp),
                             modifier = Modifier
                                 .height(54.dp)
                                 .bouncingClickable(onClick = onAddPartyClick)
@@ -340,92 +368,89 @@ fun PartyLedgerScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Row 1: Role + Balance Filters
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        LedgerSelectableChip(
-                            label = "All Roles",
-                            selected = selectedRoleFilter == null,
-                            onClick = { selectedRoleFilter = null }
-                        )
-                        CashTransaction.PARTY_ROLES.forEach { role ->
+                    if (showPartyFiltersDrawer || activeFilterCount > 0) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        // Row 1: Role + Balance Filters
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
                             LedgerSelectableChip(
-                                label = role,
-                                selected = selectedRoleFilter == role,
-                                onClick = { selectedRoleFilter = role }
+                                label = "All Roles",
+                                selected = selectedRoleFilter == null,
+                                onClick = { selectedRoleFilter = null }
                             )
-                        }
-                        PartyBalanceFilter.entries.forEach { balFilter ->
-                            if (balFilter != PartyBalanceFilter.ALL) {
+                            CashTransaction.PARTY_ROLES.forEach { role ->
                                 LedgerSelectableChip(
-                                    label = balFilter.label,
-                                    selected = selectedBalanceFilter == balFilter,
-                                    onClick = {
-                                        selectedBalanceFilter = if (selectedBalanceFilter == balFilter) {
-                                            PartyBalanceFilter.ALL
-                                        } else {
-                                            balFilter
-                                        }
-                                    }
+                                    label = role,
+                                    selected = selectedRoleFilter == role,
+                                    onClick = { selectedRoleFilter = role }
                                 )
                             }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    // Row 2: Activity Date Filters + Reset Filters
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.DateRange,
-                            contentDescription = null,
-                            modifier = Modifier.size(15.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        listOf(
-                            DateFilterPreset.ALL_TIME,
-                            DateFilterPreset.TODAY,
-                            DateFilterPreset.THIS_WEEK,
-                            DateFilterPreset.THIS_MONTH
-                        ).forEach { preset ->
-                            LedgerSelectableChip(
-                                label = if (preset == DateFilterPreset.ALL_TIME) "All Dates" else "Active: ${preset.label}",
-                                selected = selectedDatePreset == preset,
-                                onClick = { selectedDatePreset = preset }
-                            )
-                        }
-
-                        if (searchQuery.isNotBlank() ||
-                            selectedRoleFilter != null ||
-                            selectedBalanceFilter != PartyBalanceFilter.ALL ||
-                            selectedDatePreset != DateFilterPreset.ALL_TIME
-                        ) {
-                            TextButton(
-                                onClick = {
-                                    searchQuery = ""
-                                    selectedRoleFilter = null
-                                    selectedBalanceFilter = PartyBalanceFilter.ALL
-                                    selectedDatePreset = DateFilterPreset.ALL_TIME
+                            PartyBalanceFilter.entries.forEach { balFilter ->
+                                if (balFilter != PartyBalanceFilter.ALL) {
+                                    LedgerSelectableChip(
+                                        label = balFilter.label,
+                                        selected = selectedBalanceFilter == balFilter,
+                                        onClick = {
+                                            selectedBalanceFilter = if (selectedBalanceFilter == balFilter) {
+                                                PartyBalanceFilter.ALL
+                                            } else {
+                                                balFilter
+                                            }
+                                        }
+                                    )
                                 }
-                            ) {
-                                Text("Reset Filters", style = MaterialTheme.typography.labelSmall)
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        // Row 2: Activity Date Filters + Reset Filters
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.DateRange,
+                                contentDescription = null,
+                                modifier = Modifier.size(15.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            listOf(
+                                DateFilterPreset.ALL_TIME,
+                                DateFilterPreset.TODAY,
+                                DateFilterPreset.THIS_WEEK,
+                                DateFilterPreset.THIS_MONTH
+                            ).forEach { preset ->
+                                LedgerSelectableChip(
+                                    label = if (preset == DateFilterPreset.ALL_TIME) "All Dates" else "Active: ${preset.label}",
+                                    selected = selectedDatePreset == preset,
+                                    onClick = { selectedDatePreset = preset }
+                                )
+                            }
+
+                            if (searchQuery.isNotBlank() || activeFilterCount > 0) {
+                                TextButton(
+                                    onClick = {
+                                        searchQuery = ""
+                                        selectedRoleFilter = null
+                                        selectedBalanceFilter = PartyBalanceFilter.ALL
+                                        selectedDatePreset = DateFilterPreset.ALL_TIME
+                                    }
+                                ) {
+                                    Text("Reset Filters", style = MaterialTheme.typography.labelSmall)
+                                }
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
 
@@ -434,13 +459,11 @@ fun PartyLedgerScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .border(1.dp, MaterialTheme.colorScheme.outline)
-                        .padding(horizontal = 14.dp, vertical = 7.dp),
+                        .padding(horizontal = 16.dp, vertical = 6.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "PARTY NAME / ROLE / CONTACT",
+                        text = "PARTY ACCOUNT",
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontFamily = JetBrainsMonoFamily,
                             fontWeight = FontWeight.Bold
@@ -464,7 +487,7 @@ fun PartyLedgerScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(16.dp),
-                        shape = RoundedCornerShape(4.dp),
+                        shape = RoundedCornerShape(8.dp),
                         color = MaterialTheme.colorScheme.surface,
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                     ) {
@@ -495,7 +518,7 @@ fun PartyLedgerScreen(
                             Spacer(modifier = Modifier.height(14.dp))
                             Button(
                                 onClick = onAddPartyClick,
-                                shape = RoundedCornerShape(4.dp)
+                                shape = RoundedCornerShape(6.dp)
                             ) {
                                 Text("Add Party Account")
                             }
@@ -560,6 +583,13 @@ fun PartyLedgerScreen(
                 selectedPassbookParty = null
                 onSettlePartyClick(currentSummary.party, CashTransaction.TYPE_CASH_OUT, 0.0)
             },
+            onEditTransactionClick = { tx ->
+                selectedPassbookParty = null
+                onEditTransactionClick(tx)
+            },
+            onDeleteTransactionClick = { tx ->
+                onDeleteTransactionClick(tx)
+            },
             onExportPdfClick = { onExportPartyStatement(currentSummary.party) },
             onOpenInMainRegister = {
                 selectedPassbookParty = null
@@ -598,9 +628,12 @@ private fun PartyKhataRow(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp)
             .clickable(onClick = onOpenPassbook)
             .testTag("party_row_${party.id}"),
-        color = MaterialTheme.colorScheme.surface
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Row(
@@ -622,9 +655,9 @@ private fun PartyKhataRow(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Surface(
-                            shape = RoundedCornerShape(3.dp),
+                            shape = RoundedCornerShape(4.dp),
                             color = MaterialTheme.colorScheme.surfaceVariant,
-                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                         ) {
                             Text(
                                 text = party.role.uppercase(),
@@ -632,7 +665,7 @@ private fun PartyKhataRow(
                                     fontFamily = JetBrainsMonoFamily,
                                     fontSize = 10.sp
                                 ),
-                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                             )
                         }
                     }
@@ -708,12 +741,14 @@ private fun PartyKhataRow(
                 }
             }
 
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
             // Action strip per party row
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
-                    .padding(horizontal = 12.dp, vertical = 5.dp),
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f))
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -725,7 +760,7 @@ private fun PartyKhataRow(
                 ) {
                     Button(
                         onClick = onCashInClick,
-                        shape = RoundedCornerShape(3.dp),
+                        shape = RoundedCornerShape(4.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = CashInGreen,
                             contentColor = Color.White
@@ -744,7 +779,7 @@ private fun PartyKhataRow(
 
                     Button(
                         onClick = onCashOutClick,
-                        shape = RoundedCornerShape(3.dp),
+                        shape = RoundedCornerShape(4.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = CashOutRed,
                             contentColor = Color.White
@@ -764,7 +799,7 @@ private fun PartyKhataRow(
                     if (net != 0.0) {
                         Button(
                             onClick = onSettleClick,
-                            shape = RoundedCornerShape(3.dp),
+                            shape = RoundedCornerShape(4.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.primary
                             ),
@@ -783,7 +818,7 @@ private fun PartyKhataRow(
 
                     OutlinedButton(
                         onClick = onOpenPassbook,
-                        shape = RoundedCornerShape(3.dp),
+                        shape = RoundedCornerShape(4.dp),
                         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
                         modifier = Modifier.height(32.dp)
                     ) {
@@ -795,7 +830,7 @@ private fun PartyKhataRow(
 
                     OutlinedButton(
                         onClick = onExportStatement,
-                        shape = RoundedCornerShape(3.dp),
+                        shape = RoundedCornerShape(4.dp),
                         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
                         modifier = Modifier.height(32.dp)
                     ) {
@@ -815,7 +850,7 @@ private fun PartyKhataRow(
                     if (net != 0.0) {
                         OutlinedButton(
                             onClick = onShareReminder,
-                            shape = RoundedCornerShape(3.dp),
+                            shape = RoundedCornerShape(4.dp),
                             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
                             modifier = Modifier.height(32.dp)
                         ) {
@@ -857,8 +892,6 @@ private fun PartyKhataRow(
                     }
                 }
             }
-
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         }
     }
 }
@@ -872,6 +905,8 @@ private fun PartyPassbookModalSheet(
     onDismiss: () -> Unit,
     onCashInClick: () -> Unit,
     onCashOutClick: () -> Unit,
+    onEditTransactionClick: (CashTransaction) -> Unit,
+    onDeleteTransactionClick: (CashTransaction) -> Unit,
     onExportPdfClick: () -> Unit,
     onOpenInMainRegister: () -> Unit
 ) {
@@ -933,7 +968,7 @@ private fun PartyPassbookModalSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp),
+        shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
         containerColor = MaterialTheme.colorScheme.surface,
         dragHandle = null
     ) {
@@ -986,7 +1021,7 @@ private fun PartyPassbookModalSheet(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp))
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(6.dp))
                         .padding(10.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
@@ -1037,7 +1072,7 @@ private fun PartyPassbookModalSheet(
                     Button(
                         onClick = onCashInClick,
                         colors = ButtonDefaults.buttonColors(containerColor = CashInGreen, contentColor = Color.White),
-                        shape = RoundedCornerShape(4.dp),
+                        shape = RoundedCornerShape(6.dp),
                         modifier = Modifier.weight(1f)
                     ) {
                         Text("+ Cash In")
@@ -1045,20 +1080,20 @@ private fun PartyPassbookModalSheet(
                     Button(
                         onClick = onCashOutClick,
                         colors = ButtonDefaults.buttonColors(containerColor = CashOutRed, contentColor = Color.White),
-                        shape = RoundedCornerShape(4.dp),
+                        shape = RoundedCornerShape(6.dp),
                         modifier = Modifier.weight(1f)
                     ) {
                         Text("- Cash Out")
                     }
                     OutlinedButton(
                         onClick = onExportPdfClick,
-                        shape = RoundedCornerShape(4.dp)
+                        shape = RoundedCornerShape(6.dp)
                     ) {
                         Text("PDF")
                     }
                     OutlinedButton(
                         onClick = onOpenInMainRegister,
-                        shape = RoundedCornerShape(4.dp)
+                        shape = RoundedCornerShape(6.dp)
                     ) {
                         Text("Register")
                     }
@@ -1093,7 +1128,7 @@ private fun PartyPassbookModalSheet(
                         }
                     },
                     singleLine = true,
-                    shape = RoundedCornerShape(4.dp),
+                    shape = RoundedCornerShape(6.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("party_passbook_search_input")
@@ -1135,9 +1170,9 @@ private fun PartyPassbookModalSheet(
                 }
             }
 
-            HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-            // Transaction History List for this Party
+            // Transaction History List for this Party (with explicit Edit and Delete entry buttons)
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1165,6 +1200,7 @@ private fun PartyPassbookModalSheet(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .clickable { onEditTransactionClick(tx) }
                                 .padding(horizontal = 14.dp, vertical = 10.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
@@ -1197,8 +1233,35 @@ private fun PartyPassbookModalSheet(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(start = 6.dp)
+                            ) {
+                                IconButton(
+                                    onClick = { onEditTransactionClick(tx) },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Edit,
+                                        contentDescription = "Edit Voucher",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                                IconButton(
+                                    onClick = { onDeleteTransactionClick(tx) },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.DeleteOutline,
+                                        contentDescription = "Delete Voucher",
+                                        tint = MaterialTheme.colorScheme.error,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
                         }
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     }
                 }
             }

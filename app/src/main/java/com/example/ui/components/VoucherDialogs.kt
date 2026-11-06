@@ -169,6 +169,8 @@ fun VoucherEntrySheet(
     var showQuickPartyDialog by remember { mutableStateOf(false) }
     var showCalendarDatePicker by remember { mutableStateOf(false) }
     var showClockTimePicker by remember { mutableStateOf(false) }
+    var showCategoryOptions by remember { mutableStateOf(false) }
+    var showDeleteConfirmDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(parties, selectedPartyName) {
         if (selectedPartyId.isEmpty() && selectedPartyName.isNotBlank()) {
@@ -187,7 +189,7 @@ fun VoucherEntrySheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp),
+        shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
         containerColor = MaterialTheme.colorScheme.surface,
         dragHandle = null
     ) {
@@ -196,7 +198,7 @@ fun VoucherEntrySheet(
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
         ) {
-            // Utilitarian Accounting Voucher Banner
+            // Minimalist Accounting Voucher Header
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -208,7 +210,7 @@ fun VoucherEntrySheet(
                 Column {
                     Text(
                         text = if (existingTransaction != null && existingTransaction.id.isNotBlank()) {
-                            "VOUCHER #VCH-${existingTransaction.id.take(6).uppercase()}"
+                            "EDIT VOUCHER #VCH-${existingTransaction.id.take(6).uppercase()}"
                         } else if (isCashIn) {
                             "CASH IN VOUCHER (RECEIPT / CR)"
                         } else {
@@ -233,10 +235,7 @@ fun VoucherEntrySheet(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (existingTransaction != null && existingTransaction.id.isNotBlank() && onDelete != null) {
                         IconButton(
-                            onClick = {
-                                onDelete(existingTransaction.id)
-                                onDismiss()
-                            },
+                            onClick = { showDeleteConfirmDialog = true },
                             modifier = Modifier.testTag("delete_voucher_button")
                         ) {
                             Icon(
@@ -265,13 +264,14 @@ fun VoucherEntrySheet(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp))
+                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(6.dp))
                 ) {
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .background(
-                                if (isCashIn) CashInGreen else MaterialTheme.colorScheme.surface
+                                if (isCashIn) CashInGreen else MaterialTheme.colorScheme.surface,
+                                RoundedCornerShape(topStart = 6.dp, bottomStart = 6.dp)
                             )
                             .clickable { voucherType = CashTransaction.TYPE_CASH_IN }
                             .padding(vertical = 10.dp),
@@ -287,7 +287,8 @@ fun VoucherEntrySheet(
                         modifier = Modifier
                             .weight(1f)
                             .background(
-                                if (!isCashIn) CashOutRed else MaterialTheme.colorScheme.surface
+                                if (!isCashIn) CashOutRed else MaterialTheme.colorScheme.surface,
+                                RoundedCornerShape(topEnd = 6.dp, bottomEnd = 6.dp)
                             )
                             .clickable { voucherType = CashTransaction.TYPE_CASH_OUT }
                             .padding(vertical = 10.dp),
@@ -333,6 +334,7 @@ fun VoucherEntrySheet(
                     ),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    shape = RoundedCornerShape(6.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("voucher_amount_input")
@@ -388,12 +390,12 @@ fun VoucherEntrySheet(
 
                 // 1-Tap Petty Cash / Chhote-Mote Kharche Templates (shown on Cash Out)
                 if (!isCashIn) {
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(4.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                        shape = RoundedCornerShape(6.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                     ) {
                         Column(
                             modifier = Modifier
@@ -409,10 +411,11 @@ fun VoucherEntrySheet(
                                     color = CashOutRed
                                 )
                             )
-                            FlowRow(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .horizontalScroll(rememberScrollState()),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 CashTransaction.PETTY_EXPENSE_TEMPLATES.forEach { (chipLabel, defaultNarration, defaultAmt) ->
                                     val isTemplateSelected = remarkText == defaultNarration
@@ -456,6 +459,7 @@ fun VoucherEntrySheet(
                     },
                     singleLine = false,
                     maxLines = 2,
+                    shape = RoundedCornerShape(6.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("voucher_remark_input")
@@ -483,7 +487,7 @@ fun VoucherEntrySheet(
                             .weight(1.15f)
                             .clickable { showCalendarDatePicker = true }
                             .testTag("voucher_date_picker_button"),
-                        shape = RoundedCornerShape(4.dp),
+                        shape = RoundedCornerShape(6.dp),
                         color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f),
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
                     ) {
@@ -523,7 +527,7 @@ fun VoucherEntrySheet(
                             .weight(1f)
                             .clickable { showClockTimePicker = true }
                             .testTag("voucher_time_picker_button"),
-                        shape = RoundedCornerShape(4.dp),
+                        shape = RoundedCornerShape(6.dp),
                         color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f),
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
                     ) {
@@ -661,7 +665,7 @@ fun VoucherEntrySheet(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 4.dp),
-                        shape = RoundedCornerShape(4.dp),
+                        shape = RoundedCornerShape(6.dp),
                         color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f),
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
                     ) {
@@ -752,7 +756,7 @@ fun VoucherEntrySheet(
                             }
                         },
                         singleLine = true,
-                        shape = RoundedCornerShape(4.dp),
+                        shape = RoundedCornerShape(6.dp),
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("voucher_party_search_input")
@@ -818,7 +822,7 @@ fun VoucherEntrySheet(
                                     quickPartyNamePrefill = partySearchQuery.trim()
                                     showQuickPartyDialog = true
                                 },
-                            shape = RoundedCornerShape(4.dp),
+                            shape = RoundedCornerShape(6.dp),
                             color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.45f),
                             border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondary)
                         ) {
@@ -856,26 +860,71 @@ fun VoucherEntrySheet(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // Head of Account (Category)
-                Text(
-                    text = "HEAD OF ACCOUNT (CATEGORY)",
-                    style = MaterialTheme.typography.labelMedium.copy(
-                        fontFamily = JetBrainsMonoFamily,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                // Progressive Disclosure for Head of Account (Category)
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showCategoryOptions = !showCategoryOptions },
+                    shape = RoundedCornerShape(6.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                 ) {
-                    availableCategories.forEach { cat ->
-                        LedgerSelectableChip(
-                            label = cat,
-                            selected = selectedCategory == cat,
-                            onClick = { selectedCategory = cat }
-                        )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text(
+                                    text = "HEAD OF ACCOUNT (CATEGORY)",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontFamily = JetBrainsMonoFamily,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = selectedCategory,
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                )
+                            }
+                            Text(
+                                text = if (showCategoryOptions) "Hide ▲" else "Change ▼",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontFamily = JetBrainsMonoFamily,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            )
+                        }
+
+                        if (showCategoryOptions) {
+                            Spacer(modifier = Modifier.height(10.dp))
+                            FlowRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                availableCategories.forEach { cat ->
+                                    LedgerSelectableChip(
+                                        label = cat,
+                                        selected = selectedCategory == cat,
+                                        onClick = {
+                                            selectedCategory = cat
+                                            showCategoryOptions = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -888,7 +937,7 @@ fun VoucherEntrySheet(
                     )
                 }
 
-                // Existing Voucher Actions: Print Receipt Slip & Post Reversal Entry
+                // Existing Voucher Actions: Print Receipt Slip, Post Reversal Entry & Delete
                 if (existingTransaction != null && existingTransaction.id.isNotBlank()) {
                     Spacer(modifier = Modifier.height(16.dp))
                     Row(
@@ -901,7 +950,7 @@ fun VoucherEntrySheet(
                                     onPrintVoucherReceipt(existingTransaction)
                                     onDismiss()
                                 },
-                                shape = RoundedCornerShape(4.dp),
+                                shape = RoundedCornerShape(6.dp),
                                 modifier = Modifier
                                     .weight(1f)
                                     .height(44.dp)
@@ -922,7 +971,7 @@ fun VoucherEntrySheet(
                                     onReverseVoucher(existingTransaction)
                                     onDismiss()
                                 },
-                                shape = RoundedCornerShape(4.dp),
+                                shape = RoundedCornerShape(6.dp),
                                 modifier = Modifier
                                     .weight(1f)
                                     .height(44.dp)
@@ -942,57 +991,130 @@ fun VoucherEntrySheet(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Button(
-                    onClick = {
-                        val parsedAmount = amountText.trim().toDoubleOrNull()
-                        if (parsedAmount == null || parsedAmount <= 0.0) {
-                            validationError = "Enter a valid voucher amount greater than 0."
-                            return@Button
-                        }
-                        val finalRemark = remarkText.trim().ifEmpty { selectedCategory }
-                        val resolvedParty = parties.firstOrNull {
-                            it.id == selectedPartyId ||
-                                (selectedPartyName.isNotBlank() && it.name.equals(selectedPartyName.trim(), ignoreCase = true))
-                        }
-                        val finalPartyId = resolvedParty?.id ?: selectedPartyId
-                        val finalPartyName = resolvedParty?.name ?: selectedPartyName.trim()
-                        onSave(
-                            voucherType,
-                            parsedAmount,
-                            finalRemark,
-                            selectedCategory,
-                            selectedPaymentMode,
-                            finalPartyId,
-                            finalPartyName,
-                            selectedDateMillis
-                        )
-                        onDismiss()
-                    },
-                    shape = RoundedCornerShape(4.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = accentColor,
-                        contentColor = Color.White
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp)
-                        .testTag("save_voucher_button")
+                // Bottom Save / Update & Delete Row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(imageVector = Icons.Default.Check, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = if (existingTransaction != null && existingTransaction.id.isNotBlank()) {
-                            "UPDATE VOUCHER"
-                        } else {
-                            "SAVE VOUCHER ENTRY"
+                    if (existingTransaction != null && existingTransaction.id.isNotBlank() && onDelete != null) {
+                        OutlinedButton(
+                            onClick = { showDeleteConfirmDialog = true },
+                            shape = RoundedCornerShape(6.dp),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = MaterialTheme.colorScheme.error
+                            ),
+                            modifier = Modifier
+                                .height(50.dp)
+                                .testTag("bottom_delete_voucher_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.DeleteOutline,
+                                contentDescription = "Delete Entry",
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "DELETE",
+                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+                            )
+                        }
+                    }
+
+                    Button(
+                        onClick = {
+                            val parsedAmount = amountText.trim().toDoubleOrNull()
+                            if (parsedAmount == null || parsedAmount <= 0.0) {
+                                validationError = "Enter a valid voucher amount greater than 0."
+                                return@Button
+                            }
+                            val finalRemark = remarkText.trim().ifEmpty { selectedCategory }
+                            val resolvedParty = parties.firstOrNull {
+                                it.id == selectedPartyId ||
+                                    (selectedPartyName.isNotBlank() && it.name.equals(selectedPartyName.trim(), ignoreCase = true))
+                            }
+                            val finalPartyId = resolvedParty?.id ?: selectedPartyId
+                            val finalPartyName = resolvedParty?.name ?: selectedPartyName.trim()
+                            onSave(
+                                voucherType,
+                                parsedAmount,
+                                finalRemark,
+                                selectedCategory,
+                                selectedPaymentMode,
+                                finalPartyId,
+                                finalPartyName,
+                                selectedDateMillis
+                            )
+                            onDismiss()
                         },
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
-                    )
+                        shape = RoundedCornerShape(6.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = accentColor,
+                            contentColor = Color.White
+                        ),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(50.dp)
+                            .testTag("save_voucher_button")
+                    ) {
+                        Icon(imageVector = Icons.Default.Check, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = if (existingTransaction != null && existingTransaction.id.isNotBlank()) {
+                                "UPDATE VOUCHER"
+                            } else {
+                                "SAVE VOUCHER ENTRY"
+                            },
+                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }
+    }
+
+    if (showDeleteConfirmDialog && existingTransaction != null && onDelete != null) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmDialog = false },
+            shape = RoundedCornerShape(8.dp),
+            title = {
+                Text(
+                    text = "Delete Voucher Entry?",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to permanently delete Voucher #VCH-${existingTransaction.id.take(6).uppercase()} (${existingTransaction.remark.ifBlank { existingTransaction.category }})?",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showDeleteConfirmDialog = false
+                        onDelete(existingTransaction.id)
+                        onDismiss()
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(6.dp),
+                    modifier = Modifier.testTag("confirm_sheet_delete_voucher_button")
+                ) {
+                    Text("Delete Entry (डिलीट)")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirmDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 
     if (showQuickPartyDialog) {
