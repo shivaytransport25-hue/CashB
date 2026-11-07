@@ -150,31 +150,19 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      String uid = 'usr_google_default';
-      String email = 'rajesh@shivaylogistics.com';
-      String displayName = 'Rajesh Patel';
+      final googleProvider = GoogleAuthProvider();
+      googleProvider.addScope('email');
+      googleProvider.addScope('profile');
 
-      try {
-        final googleProvider = GoogleAuthProvider();
-        googleProvider.addScope('email');
-        googleProvider.addScope('profile');
-
-        final credential = await FirebaseAuth.instance.signInWithProvider(googleProvider);
-        if (credential.user != null) {
-          final u = credential.user!;
-          uid = u.uid;
-          email = u.email ?? email;
-          displayName = u.displayName ?? displayName;
-        }
-      } catch (err) {
-        debugPrint('Direct Google provider note: $err');
-        try {
-          final anon = await FirebaseAuth.instance.signInAnonymously();
-          if (anon.user != null) {
-            uid = anon.user!.uid;
-          }
-        } catch (_) {}
+      final credential = await FirebaseAuth.instance.signInWithProvider(googleProvider);
+      if (credential.user == null) {
+        throw Exception('Google Sign-In returned no authenticated user.');
       }
+
+      final u = credential.user!;
+      final uid = u.uid;
+      final email = u.email ?? 'operator@cashbook.local';
+      final displayName = u.displayName ?? (u.email != null ? u.email!.split('@')[0] : 'Operator');
 
       _currentUser = UserModel(
         id: uid,
@@ -183,6 +171,9 @@ class AuthService extends ChangeNotifier {
         defaultBusinessId: uid,
         role: UserRole.owner,
         permissions: ['all'],
+        createdAt: DateTime.now(),
+        lastLoginAt: DateTime.now(),
+      );
         createdAt: DateTime.now(),
         lastLoginAt: DateTime.now(),
       );

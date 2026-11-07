@@ -158,13 +158,7 @@ fun onGoogleSignInClicked(
             onAuthCancelled()
         } catch (e: Exception) {
             Log.e(TAG, "Google Sign-In CredentialManager note: ${e.message}", e)
-            try {
-                // Resilient fallback for devices without Google Play Services or offline-first operation
-                Firebase.auth.signInAnonymously().await()
-                onAuthSuccess()
-            } catch (fallbackErr: Exception) {
-                onAuthError(e.localizedMessage ?: "Sign in failed. Please try again.")
-            }
+            onAuthError(e.localizedMessage ?: "Google Sign-In failed. Please try again.")
         }
     }
 }
