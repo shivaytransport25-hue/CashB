@@ -1,0 +1,24 @@
+﻿ !{
+Cash Book Pro - Financial Management System
+Form1
+CashBookPro
+WebView2Data
+www
+index.html
+VS_VERSION_INFO
+VarFileInfo
+Translation
+StringFileInfo
+000004b0
+CompanyName
+FileDescription
+FileVersion
+1.0.0.0
+InternalName
+CashBookPro.dll
+LegalCopyright
+OriginalFilename
+ProductName
+ProductVersion
+1.0.0
+Assembly Version

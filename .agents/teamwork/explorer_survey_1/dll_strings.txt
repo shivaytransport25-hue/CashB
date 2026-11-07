@@ -1,0 +1,17 @@
+﻿get_CoreWebView2
+<InitWebView>d__4
+EnsureCoreWebView2Async
+File
+Microsoft.Web.WebView2.Core
+Navigate
+AssemblyFileVersionAttribute
+Initialize
+NavigateToString
+CoreWebView2Settings
+Microsoft.Web.WebView2.WinForms
+CoreWebView2EnvironmentOptions
+CoreWebView2Environment
+InitializeComponent
+InitWebView
+webView
+#CashBookPro.Form1+<InitWebView>d__4
