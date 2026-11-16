@@ -13,11 +13,13 @@ import '../services/auth_service.dart';
 class TransactionEntryScreen extends StatefulWidget {
   final int initialTabIndex; // 0: Income, 1: Expense, 2: Transfer
   final TransactionModel? existingTransaction;
+  final bool isDuplicate;
 
   const TransactionEntryScreen({
     super.key,
     this.initialTabIndex = 0,
     this.existingTransaction,
+    this.isDuplicate = false,
   });
 
   @override
@@ -220,7 +222,7 @@ class _TransactionEntryScreenState extends State<TransactionEntryScreen>
 
     ({bool success, String? error}) result;
 
-    if (widget.existingTransaction != null) {
+    if (widget.existingTransaction != null && !widget.isDuplicate) {
       final updated = widget.existingTransaction!.copyWith(
         amountPaise: amountPaise,
         accountId: _selectedAccountId,
@@ -378,7 +380,13 @@ class _TransactionEntryScreenState extends State<TransactionEntryScreen>
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('New Financial Entry'),
+          title: Text(
+            widget.isDuplicate
+                ? 'Duplicate Voucher / रिपीट वाउचर'
+                : (widget.existingTransaction != null
+                    ? 'Edit Voucher / वाउचर संशोधन'
+                    : 'New Financial Entry / नया वाउचर'),
+          ),
           bottom: TabBar(
             controller: _tabController,
             indicatorColor: isBW

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 
@@ -430,6 +431,32 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                 },
               ),
               ListTile(
+                leading: const Icon(Icons.copy_all, color: Colors.blueAccent),
+                title: const Text('Duplicate / Repeat Entry (कॉपी)'),
+                subtitle: const Text('Pre-fill into fresh new voucher'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => TransactionEntryScreen(
+                        existingTransaction: txn,
+                        isDuplicate: true,
+                      ),
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.share, color: Colors.teal),
+                title: const Text('Share Receipt (WhatsApp)'),
+                subtitle: const Text('Copy formatted receipt ready to send on WhatsApp'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _shareWhatsAppReceipt(context, auth, txn);
+                },
+              ),
+              ListTile(
                 leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
                 title: const Text('Delete Transaction Entry'),
                 subtitle: const Text('Permanently remove voucher and rollback balances'),
@@ -471,6 +498,39 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
     await Printing.layoutPdf(
       onLayout: (format) async => pdfBytes,
       name: 'Voucher_${txn.voucherNumber}.pdf',
+    );
+  }
+
+  void _shareWhatsAppReceipt(BuildContext context, AuthService auth, TransactionModel txn) {
+    final biz = auth.currentBusiness?.name ?? 'Shivay Logistics';
+    final typeStr = txn.isIncome ? 'RECEIPT (जमा)' : (txn.isExpense ? 'PAYMENT (खर्च)' : 'CONTRA TRANSFER');
+    final amountFormatted = '₹${(txn.amountPaise / 100.0).toStringAsFixed(2)}';
+    final text = '📄 *FINANCIAL RECEIPT - $biz*\n'
+        '------------------------------------\n'
+        'Voucher No: ${txn.voucherNumber}\n'
+        'Type: $typeStr\n'
+        'Date: ${txn.transactionDate}\n'
+        'Amount: $amountFormatted\n'
+        'Party: ${txn.partyName ?? "General Cash"}\n'
+        'Account: ${txn.accountName}\n'
+        'Mode: ${txn.paymentMode}\n'
+        'Remarks: ${txn.description ?? "N/A"}\n'
+        '------------------------------------\n'
+        'Recorded via Shivay CashBook Pro';
+
+    Clipboard.setData(ClipboardData(text: text));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle, color: Colors.white, size: 20),
+            const SizedBox(width: 8),
+            Expanded(child: Text('Receipt copied for WhatsApp! ($amountFormatted)')),
+          ],
+        ),
+        backgroundColor: Colors.teal[700],
+        duration: const Duration(seconds: 3),
+      ),
     );
   }
 

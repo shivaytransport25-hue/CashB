@@ -174,9 +174,6 @@ class AuthService extends ChangeNotifier {
         createdAt: DateTime.now(),
         lastLoginAt: DateTime.now(),
       );
-        createdAt: DateTime.now(),
-        lastLoginAt: DateTime.now(),
-      );
 
       _currentBusiness = BusinessModel(
         id: uid,
