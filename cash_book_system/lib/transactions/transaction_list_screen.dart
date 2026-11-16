@@ -309,19 +309,28 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
         final isTransfer = txn.isTransfer;
         final isReversed = txn.isReversed;
 
-        Color color = isIncome ? Colors.green[800]! : Colors.red[800]!;
-        if (isTransfer) color = Colors.blue[800]!;
+        Color color = isIncome ? const Color(0xFF7E946C) : const Color(0xFFE8412C);
+        if (isTransfer) color = const Color(0xFF2563EB);
         if (isReversed) color = Colors.grey;
 
         return Card(
-          elevation: 1,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+            side: BorderSide(color: color.withOpacity(0.25), width: 1),
+          ),
           child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: color.withOpacity(0.12),
+            leading: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(8),
+              ),
               child: Icon(
                 isTransfer ? Icons.swap_horiz : (isIncome ? Icons.arrow_downward : Icons.arrow_upward),
                 color: color,
+                size: 20,
               ),
             ),
             title: Row(

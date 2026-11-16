@@ -82,6 +82,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.DialogProperties
 import com.example.data.model.BookSummary
 import com.example.data.model.BusinessProfile
 import com.example.data.model.CashBook
@@ -185,9 +186,16 @@ fun VoucherEntrySheet(
     val isCashIn = voucherType == CashTransaction.TYPE_CASH_IN
     val accentColor = if (isCashIn) CashInGreen else CashOutRed
     val liveAmountDouble = amountText.trim().toDoubleOrNull() ?: 0.0
+    var showDiscardPrompt by remember { mutableStateOf(false) }
 
     ModalBottomSheet(
-        onDismissRequest = onDismiss,
+        onDismissRequest = {
+            if (amountText.isNotBlank() && (amountText.toDoubleOrNull() ?: 0.0) > 0.0) {
+                showDiscardPrompt = true
+            } else {
+                onDismiss()
+            }
+        },
         sheetState = sheetState,
         shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
         containerColor = MaterialTheme.colorScheme.surface,

@@ -109,27 +109,15 @@ class AccountingService extends ChangeNotifier {
     final now = DateTime.now();
     final todayStr = DateFormatter.formatDate(now);
 
-    // 1. Initial Accounts
+    // 1. Clean Initial Accounts (Zero Opening Balances)
     final mainCash = AccountModel(
       id: 'acc_main_cash',
       businessId: businessId,
-      accountName: 'Main Cash Counter',
+      accountName: 'Cash in Hand',
       accountType: AccountType.cash,
-      openingBalancePaise: 5000000, // ₹50,000.00
+      openingBalancePaise: 0,
       openingDate: todayStr,
-      currentBalancePaise: 5000000,
-      createdAt: now,
-      updatedAt: now,
-    );
-
-    final pettyCash = AccountModel(
-      id: 'acc_petty_cash',
-      businessId: businessId,
-      accountName: 'Office Petty Cash',
-      accountType: AccountType.cash,
-      openingBalancePaise: 1000000, // ₹10,000.00
-      openingDate: todayStr,
-      currentBalancePaise: 1000000,
+      currentBalancePaise: 0,
       createdAt: now,
       updatedAt: now,
     );
@@ -137,41 +125,20 @@ class AccountingService extends ChangeNotifier {
     final sbiBank = AccountModel(
       id: 'acc_sbi_bank',
       businessId: businessId,
-      accountName: 'State Bank of India (Current)',
+      accountName: 'Primary Bank Account',
       accountType: AccountType.bank,
-      openingBalancePaise: 15000000, // ₹1,50,000.00
+      openingBalancePaise: 0,
       openingDate: todayStr,
-      currentBalancePaise: 15000000,
-      bankName: 'State Bank of India',
-      accountNumber: 'XXXX-XXXX-9821',
-      ifscCode: 'SBIN0001234',
-      branch: 'Ring Road Branch',
-      createdAt: now,
-      updatedAt: now,
-    );
-
-    final hdfcBank = AccountModel(
-      id: 'acc_hdfc_bank',
-      businessId: businessId,
-      accountName: 'HDFC Bank (Operations)',
-      accountType: AccountType.bank,
-      openingBalancePaise: 7500000, // ₹75,000.00
-      openingDate: todayStr,
-      currentBalancePaise: 7500000,
-      bankName: 'HDFC Bank Ltd',
-      accountNumber: 'XXXX-XXXX-4512',
-      ifscCode: 'HDFC0005678',
-      branch: 'Textile Market Branch',
+      currentBalancePaise: 0,
+      bankName: 'Bank',
       createdAt: now,
       updatedAt: now,
     );
 
     await _db.upsertAccount(mainCash);
-    await _db.upsertAccount(pettyCash);
     await _db.upsertAccount(sbiBank);
-    await _db.upsertAccount(hdfcBank);
 
-    // 2. Initial Categories
+    // 2. Initial Standard Categories (No dummy balances)
     final categoriesToSeed = [
       ('cat_sales', 'Sales & Revenue', 'income', 'payments', '#2E7D32'),
       ('cat_freight', 'Freight & Transport Income', 'income', 'local_shipping', '#1B5E20'),
@@ -199,47 +166,7 @@ class AccountingService extends ChangeNotifier {
       ));
     }
 
-    // 3. Initial Parties
-    final partiesToSeed = [
-      PartyModel(
-        id: 'pty_reliance',
-        businessId: businessId,
-        name: 'Reliance Logistics Client',
-        partyType: PartyType.customer,
-        phone: '+91 98980 11223',
-        address: 'Hazira Complex, Surat',
-        openingBalancePaise: 4500000, // Receivable ₹45,000
-        currentBalancePaise: 4500000,
-        createdAt: now,
-        updatedAt: now,
-      ),
-      PartyModel(
-        id: 'pty_iocl',
-        businessId: businessId,
-        name: 'Indian Oil Depot (Supplier)',
-        partyType: PartyType.supplier,
-        phone: '+91 94260 44556',
-        address: 'Magdalla Port Road',
-        openingBalancePaise: 3000000, // Payable ₹30,000
-        currentBalancePaise: -3000000,
-        createdAt: now,
-        updatedAt: now,
-      ),
-      PartyModel(
-        id: 'pty_mukesh_driver',
-        businessId: businessId,
-        name: 'Mukeshbhai (Truck Driver GJ-05-XX-1234)',
-        partyType: PartyType.employee,
-        phone: '+91 97250 88990',
-        currentBalancePaise: 0,
-        createdAt: now,
-        updatedAt: now,
-      ),
-    ];
-
-    for (final p in partiesToSeed) {
-      await _db.upsertParty(p);
-    }
+    // 3. Clean Parties: Zero Dummy Parties
   }
 
   /// Generates the next sequential voucher number (e.g. VCH-2026-0001)

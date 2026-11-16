@@ -9,6 +9,7 @@ import '../core/utils/date_formatter.dart';
 import '../services/accounting_service.dart';
 import '../services/auth_service.dart';
 import '../sync/sync_engine.dart';
+import '../transactions/transaction_entry_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   final VoidCallback onNavigateToTransactions;
@@ -45,6 +46,10 @@ class DashboardScreen extends StatelessWidget {
                   children: [
                     // Header Bar with Business Info & Sync Pill
                     _buildTopHeader(context, auth, syncEngine, isDesktop),
+                    const SizedBox(height: 16),
+
+                    // Quick Financial Entry Action Strip (Sage & Tomato)
+                    _buildQuickActionStrip(context),
                     const SizedBox(height: 20),
 
                     // Primary Financial Cards
@@ -152,6 +157,125 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildQuickActionStrip(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Theme.of(context).dividerColor),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: InkWell(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const TransactionEntryScreen(initialTabIndex: 0),
+                  ),
+                );
+              },
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0F4EC),
+                  border: Border.all(color: const Color(0xFF7E946C), width: 1.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.arrow_downward, size: 16, color: Color(0xFF2D4020)),
+                    SizedBox(width: 6),
+                    Text(
+                      '+ Cash In (जमा)',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12.5,
+                        color: Color(0xFF2D4020),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: InkWell(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const TransactionEntryScreen(initialTabIndex: 1),
+                  ),
+                );
+              },
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFDF1EF),
+                  border: Border.all(color: const Color(0xFFC5301E), width: 1.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.arrow_upward, size: 16, color: Color(0xFF8E1F11)),
+                    SizedBox(width: 6),
+                    Text(
+                      '- Cash Out (खर्च)',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12.5,
+                        color: Color(0xFF8E1F11),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          InkWell(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const TransactionEntryScreen(initialTabIndex: 2),
+                ),
+              );
+            },
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF6FF),
+                border: Border.all(color: const Color(0xFF2563EB), width: 1.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.swap_horiz, size: 16, color: Color(0xFF1D4ED8)),
+                  SizedBox(width: 4),
+                  Text(
+                    'Contra',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12.5,
+                      color: Color(0xFF1D4ED8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildBalanceOverviewGrid(
     BuildContext context,
     AccountingService accounting,
@@ -168,35 +292,35 @@ class DashboardScreen extends StatelessWidget {
         title: 'Total Available Balance',
         value: available,
         icon: Icons.account_balance_wallet,
-        color: Colors.indigo,
+        color: const Color(0xFF1E293B),
         subtitle: 'Cash + Bank accounts',
       ),
       _StatCard(
         title: 'Total Cash in Hand',
         value: cash,
         icon: Icons.payments,
-        color: Colors.teal,
+        color: const Color(0xFF7E946C),
         subtitle: '${accounting.accounts.where((a) => a.accountType == AccountType.cash).length} Cash Accounts',
       ),
       _StatCard(
         title: 'Total Bank Balance',
         value: bank,
         icon: Icons.account_balance,
-        color: Colors.blueAccent,
+        color: const Color(0xFF2563EB),
         subtitle: '${accounting.accounts.where((a) => a.accountType == AccountType.bank).length} Bank Accounts',
       ),
       _StatCard(
         title: 'Total Receivables',
         value: receivables,
         icon: Icons.call_received,
-        color: Colors.green[700]!,
+        color: const Color(0xFF7E946C),
         subtitle: 'From customers',
       ),
       _StatCard(
         title: 'Total Payables',
         value: payables,
         icon: Icons.call_made,
-        color: Colors.deepOrange,
+        color: const Color(0xFFE8412C),
         subtitle: 'To suppliers',
       ),
     ];
@@ -626,45 +750,76 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    style: TextStyle(fontSize: 11, color: Colors.grey[600], fontWeight: FontWeight.w600),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                CircleAvatar(
-                  radius: 14,
-                  backgroundColor: color.withOpacity(0.12),
-                  child: Icon(icon, size: 16, color: color),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color),
-              overflow: TextOverflow.ellipsis,
-            ),
-            Text(
-              subtitle,
-              style: TextStyle(fontSize: 10, color: Colors.grey[500]),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF111A28) : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withOpacity(0.25),
+          width: 1.2,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.04),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(7),
+                ),
+                child: Icon(icon, size: 15, color: color),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: color,
+              letterSpacing: -0.2,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+          Text(
+            subtitle,
+            style: TextStyle(
+              fontSize: 10,
+              color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+              fontWeight: FontWeight.w500,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
   }

@@ -332,6 +332,20 @@ class _TransactionEntryScreenState extends State<TransactionEntryScreen>
     }
   }
 
+  void _addQuickAmount(int rupeesToAdd) {
+    final currentPaise = CurrencyFormatter.parseToPaise(_amountController.text);
+    final newPaise = currentPaise + (rupeesToAdd * 100);
+    setState(() {
+      _amountController.text = (newPaise / 100.0).toStringAsFixed(2);
+    });
+  }
+
+  void _clearAmount() {
+    setState(() {
+      _amountController.clear();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final accounting = context.watch<AccountingService>();
@@ -339,35 +353,58 @@ class _TransactionEntryScreenState extends State<TransactionEntryScreen>
     final theme = Theme.of(context);
     final isBW = theme.brightness == Brightness.light && theme.colorScheme.primary == const Color(0xFF000000);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('New Financial Entry'),
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: isBW
-              ? Colors.black
-              : (_tabController.index == 0
-                  ? Colors.green
-                  : (_tabController.index == 1 ? Colors.red : Colors.blue)),
-          labelColor: Theme.of(context).colorScheme.primary,
-          tabs: [
-            Tab(icon: Icon(Icons.arrow_downward, color: isBW ? Colors.black87 : Colors.green), text: 'Money In (Income)'),
-            Tab(icon: Icon(Icons.arrow_upward, color: isBW ? Colors.black87 : Colors.red), text: 'Money Out (Expense)'),
-            Tab(icon: Icon(Icons.swap_horiz, color: isBW ? Colors.black87 : Colors.blue), text: 'Transfer (Cash<->Bank)'),
-          ],
+    return PopScope(
+      canPop: _amountController.text.trim().isEmpty,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldLeave = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Discard Unsaved Voucher?'),
+            content: const Text('You have entered voucher details. Are you sure you want to discard them?'),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Keep Editing')),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE8412C), foregroundColor: Colors.white),
+                child: const Text('Discard'),
+              ),
+            ],
+          ),
+        );
+        if (shouldLeave == true && context.mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('New Financial Entry'),
+          bottom: TabBar(
+            controller: _tabController,
+            indicatorColor: isBW
+                ? Colors.black
+                : (_tabController.index == 0
+                    ? const Color(0xFF7E946C)
+                    : (_tabController.index == 1 ? const Color(0xFFE8412C) : const Color(0xFF2563EB))),
+            labelColor: Theme.of(context).colorScheme.primary,
+            tabs: [
+              Tab(icon: Icon(Icons.arrow_downward, color: isBW ? Colors.black87 : const Color(0xFF7E946C)), text: 'Money In (Income)'),
+              Tab(icon: Icon(Icons.arrow_upward, color: isBW ? Colors.black87 : const Color(0xFFE8412C)), text: 'Money Out (Expense)'),
+              Tab(icon: Icon(Icons.swap_horiz, color: isBW ? Colors.black87 : const Color(0xFF2563EB)), text: 'Transfer (Cash<->Bank)'),
+            ],
+          ),
         ),
-      ),
-      body: Center(
-        child: Container(
-          constraints: BoxConstraints(maxWidth: isDesktop ? 650 : double.infinity),
-          padding: const EdgeInsets.all(20),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Amount Input Field with Large Rupees Text
-                _buildAmountField(),
-                const SizedBox(height: 20),
+        body: Center(
+          child: Container(
+            constraints: BoxConstraints(maxWidth: isDesktop ? 650 : double.infinity),
+            padding: const EdgeInsets.all(20),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Amount Input Field with Large Rupees Text
+                  _buildAmountField(),
+                  const SizedBox(height: 20),
 
                 // Date Picker Row
                 _buildDatePickerTile(),
@@ -435,8 +472,8 @@ class _TransactionEntryScreenState extends State<TransactionEntryScreen>
                       backgroundColor: isBW
                           ? Colors.black
                           : (_tabController.index == 0
-                              ? Colors.green[700]
-                              : (_tabController.index == 1 ? Colors.red[700] : Colors.blue[700])),
+                              ? const Color(0xFF7E946C)
+                              : (_tabController.index == 1 ? const Color(0xFFE8412C) : const Color(0xFF2563EB))),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -448,47 +485,160 @@ class _TransactionEntryScreenState extends State<TransactionEntryScreen>
           ),
         ),
       ),
+    ),
     );
   }
 
   Widget _buildAmountField() {
     final theme = Theme.of(context);
     final isBW = theme.brightness == Brightness.light && theme.colorScheme.primary == const Color(0xFF000000);
+    final activeColor = isBW
+        ? Colors.black
+        : (_tabController.index == 0
+            ? const Color(0xFF7E946C)
+            : (_tabController.index == 1 ? const Color(0xFFE8412C) : const Color(0xFF2563EB)));
 
-    return Card(
-      elevation: 0,
-      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: isBW
-              ? Colors.black
-              : (_tabController.index == 0
-                  ? Colors.green
-                  : (_tabController.index == 1 ? Colors.red : Colors.blue)),
-          width: 2,
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: TextField(
-          controller: _amountController,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          autofocus: true,
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: isBW
-                ? Colors.black
-                : (_tabController.index == 0
-                    ? Colors.green[800]
-                    : (_tabController.index == 1 ? Colors.red[800] : Colors.blue[800])),
+    final enteredPaise = CurrencyFormatter.parseToPaise(_amountController.text);
+    final inWords = CurrencyFormatter.toWords(enteredPaise);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: activeColor.withOpacity(0.4),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: activeColor.withOpacity(0.06),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-          decoration: const InputDecoration(
-            prefixText: '₹ ',
-            prefixStyle: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-            labelText: 'Enter Amount (₹)',
-            border: InputBorder.none,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'VOUCHER AMOUNT (₹ INR)',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: theme.textTheme.bodySmall?.color ?? Colors.grey[600],
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  Text(
+                    'Exact Paise Supported',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              TextField(
+                controller: _amountController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                autofocus: true,
+                onChanged: (_) => setState(() {}),
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  color: activeColor,
+                  letterSpacing: -0.5,
+                ),
+                decoration: InputDecoration(
+                  prefixText: '₹ ',
+                  prefixStyle: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    color: activeColor,
+                  ),
+                  hintText: '0.00',
+                  border: InputBorder.none,
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: activeColor.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.spellcheck, size: 14, color: activeColor),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        inWords,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontStyle: FontStyle.italic,
+                          fontWeight: FontWeight.w600,
+                          color: activeColor,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        // 1-Tap Quick Amount Chips
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            _buildQuickChip('+₹100', () => _addQuickAmount(100), activeColor),
+            _buildQuickChip('+₹200', () => _addQuickAmount(200), activeColor),
+            _buildQuickChip('+₹500', () => _addQuickAmount(500), activeColor),
+            _buildQuickChip('+₹1k', () => _addQuickAmount(1000), activeColor),
+            _buildQuickChip('+₹2k', () => _addQuickAmount(2000), activeColor),
+            _buildQuickChip('+₹5k', () => _addQuickAmount(5000), activeColor),
+            _buildQuickChip('+₹10k', () => _addQuickAmount(10000), activeColor),
+            _buildQuickChip('Clear', _clearAmount, const Color(0xFFE8412C), isClear: true),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickChip(String label, VoidCallback onTap, Color color, {bool isClear = false}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(6),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isClear ? const Color(0xFFFDF1EF) : color.withOpacity(0.08),
+          border: Border.all(
+            color: isClear ? const Color(0xFFE8412C).withOpacity(0.4) : color.withOpacity(0.3),
+            width: 1,
+          ),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11.5,
+            fontWeight: FontWeight.bold,
+            color: isClear ? const Color(0xFFE8412C) : color,
           ),
         ),
       ),

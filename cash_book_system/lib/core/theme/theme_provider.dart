@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 enum AppColorTheme {
-  emeraldGreen('Emerald Green', Color(0xFF1B5E20), Color(0xFF00695C)),
-  royalBlue('Royal Blue', Color(0xFF0D47A1), Color(0xFF1565C0)),
+  emeraldGreen('Emerald & Sage Green', Color(0xFF7E946C), Color(0xFFE8412C)),
+  royalBlue('Royal Blue', Color(0xFF2563EB), Color(0xFF1D4ED8)),
   indigoPurple('Indigo Purple', Color(0xFF4A148C), Color(0xFF6A1B9A)),
-  warmAmber('Warm Amber', Color(0xFFE65100), Color(0xFFF57C00)),
-  crimsonRose('Crimson Rose', Color(0xFF880E4F), Color(0xFFAD1457)),
-  oceanTeal('Ocean Teal', Color(0xFF00695C), Color(0xFF00897B));
+  warmAmber('Warm Amber', Color(0xFFD97706), Color(0xFFB45309)),
+  crimsonRose('Crimson Rose', Color(0xFFE8412C), Color(0xFFC5301E)),
+  oceanTeal('Ocean Teal', Color(0xFF0D9488), Color(0xFF0F766E));
 
   final String displayName;
   final Color primaryColor;
@@ -147,31 +147,34 @@ class ThemeProvider extends ChangeNotifier with WidgetsBindingObserver {
         brightness: Brightness.light,
         primary: primary,
         secondary: secondary,
-        surface: const Color(0xFFF9FAFB),
-        surfaceContainerHighest: const Color(0xFFEBEFF2),
+        surface: const Color(0xFFFFFFFF),
+        surfaceContainerHighest: const Color(0xFFECE8DD),
       ),
-      scaffoldBackgroundColor: const Color(0xFFF3F4F6),
+      scaffoldBackgroundColor: const Color(0xFFF7F5EF),
       cardTheme: CardThemeData(
-        elevation: 0.5,
+        elevation: 0,
         color: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: Color(0xFFE2DDD0), width: 1),
+        ),
         margin: EdgeInsets.zero,
       ),
-      appBarTheme: AppBarTheme(
+      appBarTheme: const AppBarTheme(
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
+        backgroundColor: Color(0xFFF7F5EF),
+        foregroundColor: Color(0xFF0F172A),
         centerTitle: false,
         surfaceTintColor: Colors.transparent,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          elevation: 0.5,
+          elevation: 0,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
       dividerTheme: const DividerThemeData(
-        color: Color(0xFFE5E7EB),
+        color: Color(0xFFE2DDD0),
         thickness: 1,
       ),
     );
@@ -186,31 +189,34 @@ class ThemeProvider extends ChangeNotifier with WidgetsBindingObserver {
       colorScheme: ColorScheme.fromSeed(
         seedColor: primary,
         brightness: Brightness.dark,
-        surface: const Color(0xFF1E1E2E),
-        surfaceContainerHighest: const Color(0xFF2A2B3D),
+        surface: const Color(0xFF111A28),
+        surfaceContainerHighest: const Color(0xFF182438),
       ),
-      scaffoldBackgroundColor: const Color(0xFF12121E),
+      scaffoldBackgroundColor: const Color(0xFF0B111B),
       cardTheme: CardThemeData(
-        elevation: 1,
-        color: const Color(0xFF1E1E2E),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 0,
+        color: const Color(0xFF111A28),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: Color(0xFF1E293B), width: 1),
+        ),
         margin: EdgeInsets.zero,
       ),
       appBarTheme: const AppBarTheme(
         elevation: 0,
-        backgroundColor: Color(0xFF1E1E2E),
-        foregroundColor: Colors.white,
+        backgroundColor: Color(0xFF0B111B),
+        foregroundColor: Color(0xFFF8FAFC),
         centerTitle: false,
         surfaceTintColor: Colors.transparent,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          elevation: 1,
+          elevation: 0,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
       dividerTheme: const DividerThemeData(
-        color: Color(0xFF2E2F40),
+        color: Color(0xFF1E293B),
         thickness: 1,
       ),
     );
